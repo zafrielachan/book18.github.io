@@ -1,0 +1,2659 @@
+<!DOCTYPE html>
+<html lang="id" class="scroll-smooth">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>BookVerse — Platform E-Book Digital & Interactive Reader</title>
+
+  <!-- Tailwind CSS v3.4.17 via CDN -->
+  <script src="https://cdn.tailwindcss.com/3.4.17"></script>
+
+  <!-- FontAwesome 6.5.1 via CDN -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+
+  <!-- Google Fonts: Inter (Sans-Serif UI & Reader) & Merriweather (Serif Reader) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Merriweather:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet" />
+
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              50: '#EEF2FF',
+              100: '#E0E7FF',
+              200: '#C7D2FE',
+              500: '#6366F1',
+              600: '#4F46E5',
+              700: '#4338CA',
+              900: '#312E81'
+            },
+            surface: '#F8FAFC',
+            charcoal: '#1E293B'
+          },
+          fontFamily: {
+            sans: ['Inter', 'system-ui', '-apple-system', 'sans-serif'],
+            serif: ['Merriweather', 'Georgia', 'serif']
+          }
+        }
+      }
+    };
+  </script>
+
+  <style>
+    /* ==========================================================================
+       CUSTOM STYLES & READER THEMES
+       ========================================================================== */
+    body {
+      background-color: #F8FAFC;
+      color: #1E293B;
+      font-family: 'Inter', sans-serif;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    /* Tema Mode Baca (Light, Sepia, Dark) */
+    .reader-theme-light {
+      background-color: #F8FAFC;
+      color: #1E293B;
+    }
+    .reader-theme-light .reader-page-card {
+      background-color: #FFFFFF;
+      color: #1E293B;
+      border-color: #E2E8F0;
+      box-shadow: 0 10px 30px -5px rgba(15, 23, 42, 0.06);
+    }
+    .reader-theme-light .reader-toolbar {
+      background-color: rgba(255, 255, 255, 0.95);
+      border-color: #E2E8F0;
+      color: #1E293B;
+    }
+
+    .reader-theme-sepia {
+      background-color: #EFE6D5;
+      color: #433422;
+    }
+    .reader-theme-sepia .reader-page-card {
+      background-color: #FBF5E6;
+      color: #3D2E1E;
+      border-color: #DFD1B8;
+      box-shadow: 0 10px 30px -5px rgba(67, 52, 34, 0.08);
+    }
+    .reader-theme-sepia .reader-toolbar {
+      background-color: rgba(251, 245, 230, 0.96);
+      border-color: #DFD1B8;
+      color: #433422;
+    }
+
+    .reader-theme-dark {
+      background-color: #0B1120;
+      color: #E2E8F0;
+    }
+    .reader-theme-dark .reader-page-card {
+      background-color: #151F32;
+      color: #E2E8F0;
+      border-color: #1E293B;
+      box-shadow: 0 10px 35px -5px rgba(0, 0, 0, 0.5);
+    }
+    .reader-theme-dark .reader-toolbar {
+      background-color: rgba(15, 23, 42, 0.96);
+      border-color: #1E293B;
+      color: #E2E8F0;
+    }
+
+    /* Efek 3D halus pada Sampul Buku */
+    .book-cover-3d {
+      position: relative;
+      transition: transform 0.25s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.25s ease;
+    }
+    .book-card:hover .book-cover-3d {
+      transform: translateY(-4px) scale(1.02);
+    }
+    .book-spine-overlay {
+      background: linear-gradient(90deg, rgba(255,255,255,0.25) 0%, rgba(0,0,0,0.18) 4%, rgba(255,255,255,0.12) 8%, rgba(0,0,0,0) 18%);
+    }
+
+    /* Custom Scrollbar */
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: transparent;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #CBD5E1;
+      border-radius: 9999px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #94A3B8;
+    }
+
+    /* Transisi Halaman Baca */
+    .reader-content-transition {
+      transition: font-size 0.15s ease, max-width 0.25s ease, background-color 0.25s ease, color 0.25s ease;
+    }
+  </style>
+</head>
+
+<body class="min-h-screen flex flex-col selection:bg-brand-500 selection:text-white">
+
+  <!-- ==========================================================================
+       TOP HEADER NAVIGATION
+       ========================================================================== -->
+  <header class="sticky top-0 z-30 bg-white/95 backdrop-blur-md border-b border-slate-200/80 transition-all">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-3">
+      
+      <!-- Logo & Beta Badge -->
+      <div class="flex items-center gap-2.5 shrink-0">
+        <button id="btn-logo-home" type="button" class="flex items-center gap-2.5 text-left group focus:outline-none">
+          <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-brand-500 to-brand-700 flex items-center justify-center text-white shadow-md shadow-brand-500/25 group-hover:scale-105 transition-transform">
+            <i class="fa-solid fa-book-open-reader text-lg"></i>
+          </div>
+          <div>
+            <div class="flex items-center gap-2">
+              <span class="font-extrabold text-xl tracking-tight text-slate-900">Book<span class="text-brand-500">Verse</span></span>
+              <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-brand-50 text-brand-600 border border-brand-200">
+                Beta Prototype
+              </span>
+            </div>
+            <p class="text-[11px] text-slate-500 hidden sm:block">Digital Bookstore &amp; Interactive Reader</p>
+          </div>
+        </button>
+      </div>
+
+      <!-- Real-Time Interactive Search Bar -->
+      <div class="flex-1 max-w-md mx-1 sm:mx-4">
+        <div class="relative">
+          <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-sm pointer-events-none"></i>
+          <input
+            id="global-search-input"
+            type="text"
+            placeholder="Cari judul buku, penulis, atau topik..."
+            class="w-full pl-10 pr-9 py-2 rounded-xl bg-slate-100 hover:bg-slate-200/60 focus:bg-white text-sm text-slate-800 placeholder-slate-400 border border-transparent focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 focus:outline-none transition-all"
+          />
+          <button
+            id="btn-clear-search"
+            type="button"
+            title="Bersihkan pencarian"
+            class="hidden absolute right-2.5 top-1/2 -translate-y-1/2 w-6 h-6 rounded-full text-slate-400 hover:text-slate-600 hover:bg-slate-200/60 flex items-center justify-center text-xs"
+          >
+            <i class="fa-solid fa-xmark"></i>
+          </button>
+        </div>
+      </div>
+
+      <!-- Right Action Buttons -->
+      <div class="flex items-center gap-2 shrink-0">
+        <button
+          id="btn-open-upload-modal"
+          type="button"
+          class="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs sm:text-sm font-semibold bg-brand-50 hover:bg-brand-100 text-brand-600 border border-brand-200/70 transition-all active:scale-95"
+        >
+          <i class="fa-solid fa-cloud-arrow-up"></i>
+          <span class="hidden md:inline">Tambah E-Book Sendiri</span>
+          <span class="md:hidden">Upload</span>
+        </button>
+
+        <button
+          id="btn-header-continue-reading"
+          type="button"
+          class="hidden sm:inline-flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs sm:text-sm font-semibold bg-slate-900 hover:bg-slate-800 text-white shadow-sm transition-all active:scale-95"
+          title="Lanjutkan membaca buku terakhir"
+        >
+          <i class="fa-solid fa-glasses text-brand-300"></i>
+          <span>Lanjut Baca</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- ==========================================================================
+       MAIN LAYOUT CONTAINER (SIDEBAR + CONTENT AREA)
+       ========================================================================== -->
+  <div class="flex-1 max-w-7xl w-full mx-auto flex flex-col lg:flex-row pb-20 lg:pb-10">
+
+    <!-- DESKTOP LEFT SIDEBAR NAVIGATION -->
+    <aside class="hidden lg:flex lg:w-64 xl:w-68 shrink-0 flex-col gap-6 p-6 border-r border-slate-200/80 select-none">
+      
+      <!-- Menu Navigasi Utama -->
+      <div>
+        <p class="px-3 text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-2.5">Menu Navigasi</p>
+        <nav class="space-y-1.5" aria-label="Sidebar Navigation">
+          <button
+            type="button"
+            data-nav-target="explore"
+            class="nav-btn w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm font-semibold transition-all"
+          >
+            <span class="flex items-center gap-3">
+              <i class="fa-solid fa-compass w-5 text-center"></i>
+              <span>Toko / Explore</span>
+            </span>
+            <span class="text-[11px] font-medium px-2 py-0.5 rounded-full bg-slate-100 text-slate-600" id="sidebar-store-count">8</span>
+          </button>
+
+          <button
+            type="button"
+            data-nav-target="library"
+            class="nav-btn w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm font-semibold transition-all"
+          >
+            <span class="flex items-center gap-3">
+              <i class="fa-solid fa-bookmark w-5 text-center"></i>
+              <span>Perpustakaan Saya</span>
+            </span>
+            <span class="text-[11px] font-bold px-2 py-0.5 rounded-full bg-brand-100 text-brand-700" id="sidebar-library-count">0</span>
+          </button>
+
+          <button
+            type="button"
+            data-nav-target="reader"
+            class="nav-btn w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm font-semibold transition-all"
+          >
+            <span class="flex items-center gap-3">
+              <i class="fa-solid fa-book-open w-5 text-center"></i>
+              <span>E-Book Reader</span>
+            </span>
+            <span class="w-2 h-2 rounded-full bg-emerald-500" title="Reader Siap"></span>
+          </button>
+        </nav>
+      </div>
+
+      <!-- Widget Buku Terakhir Dibaca di Sidebar -->
+      <div class="bg-white rounded-2xl p-4 border border-slate-200/80 shadow-sm">
+        <div class="flex items-center justify-between mb-2">
+          <span class="text-xs font-bold text-slate-700 flex items-center gap-1.5">
+            <i class="fa-solid fa-clock-rotate-left text-brand-500"></i>
+            Sedang Dibaca
+          </span>
+          <span id="sidebar-active-progress-text" class="text-[11px] font-bold text-brand-600">0%</span>
+        </div>
+        <p id="sidebar-active-book-title" class="text-xs font-bold text-slate-900 line-clamp-1">Filosofi Teras Digital</p>
+        <p id="sidebar-active-book-author" class="text-[11px] text-slate-500 mb-3 line-clamp-1">Dr. Aris Pratama</p>
+        <div class="w-full h-1.5 bg-slate-100 rounded-full overflow-hidden mb-3">
+          <div id="sidebar-active-progress-bar" class="h-full bg-brand-500 rounded-full transition-all duration-300" style="width: 15%"></div>
+        </div>
+        <button
+          id="btn-sidebar-open-reader"
+          type="button"
+          class="w-full py-2 px-3 rounded-xl bg-brand-500 hover:bg-brand-600 text-white text-xs font-semibold transition-all flex items-center justify-center gap-1.5 shadow-sm shadow-brand-500/20"
+        >
+          <i class="fa-solid fa-play text-[10px]"></i>
+          <span>Buka Reader</span>
+        </button>
+      </div>
+
+      <!-- Info Penyimpanan Lokal & Reset Demo -->
+      <div class="mt-auto pt-4 border-t border-slate-200/70">
+        <div class="bg-slate-100/80 rounded-xl p-3.5 text-xs text-slate-600 space-y-2">
+          <div class="flex items-center justify-between font-semibold text-slate-700">
+            <span><i class="fa-solid fa-database text-brand-500 mr-1.5"></i>Sinkronisasi Lokal</span>
+            <span class="text-[10px] text-emerald-600 font-bold">Aktif</span>
+          </div>
+          <p class="text-[11px] text-slate-500 leading-relaxed">
+            Koleksi buku, progres halaman, bookmark, dan preferensi mode baca tersimpan otomatis di browser Anda.
+          </p>
+          <button
+            id="btn-reset-demo-data"
+            type="button"
+            class="w-full mt-1 py-1.5 px-2.5 rounded-lg bg-white hover:bg-rose-50 text-slate-600 hover:text-rose-600 border border-slate-200 hover:border-rose-200 text-[11px] font-medium transition-colors flex items-center justify-center gap-1.5"
+          >
+            <i class="fa-solid fa-rotate-left"></i>
+            <span>Reset Data Default</span>
+          </button>
+        </div>
+      </div>
+
+    </aside>
+
+    <!-- ========================================================================
+         MAIN SPA VIEW CONTAINER
+         ======================================================================== -->
+    <main class="flex-1 min-w-0 p-4 sm:p-6 lg:p-8">
+
+      <!-- ======================================================================
+           HALAMAN 1: TOKO / EXPLORE (MARKETPLACE)
+           ====================================================================== -->
+      <section id="view-explore" class="space-y-8">
+        
+        <!-- Banner Promo / Featured Book ("Trending Minggu Ini") -->
+        <div id="featured-banner" class="relative rounded-3xl overflow-hidden bg-gradient-to-r from-slate-900 via-brand-900 to-indigo-950 text-white shadow-xl">
+          <!-- Dekorasi Latar Abstrak -->
+          <div class="absolute -top-24 -right-24 w-80 h-80 rounded-full bg-brand-500/20 blur-3xl pointer-events-none"></div>
+          <div class="absolute -bottom-24 left-1/3 w-64 h-64 rounded-full bg-purple-500/20 blur-3xl pointer-events-none"></div>
+
+          <div class="relative z-10 p-6 sm:p-8 lg:p-10 flex flex-col md:flex-row items-center gap-6 lg:gap-10">
+            <!-- Informasi Buku Unggulan -->
+            <div class="flex-1 space-y-4 text-center md:text-left">
+              <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-400/15 border border-amber-400/30 text-amber-300 text-xs font-bold tracking-wide">
+                <i class="fa-solid fa-fire-flame-curved"></i>
+                <span>TRENDING MINGGU INI • PILIHAN EDITOR</span>
+              </div>
+
+              <h1 class="text-2xl sm:text-3xl lg:text-4xl font-extrabold tracking-tight leading-tight">
+                Arsitektur Masa Depan: AI &amp; Revolusi Kreatif Manusia
+              </h1>
+
+              <p class="text-slate-300 text-sm sm:text-base max-w-2xl leading-relaxed">
+                Karya <strong class="text-white">Prof. Rendra Wijaya, Ph.D.</strong> — Panduan komprehensif memahami bagaimana kecerdasan buatan mengubah lanskap bisnis, desain produk, dan cara kita berpikir di abad ke-21.
+              </p>
+
+              <div class="flex flex-wrap items-center justify-center md:justify-start gap-4 text-xs sm:text-sm text-slate-300 pt-1">
+                <span class="flex items-center gap-1.5 text-amber-400 font-bold">
+                  <i class="fa-solid fa-star"></i> 4.9 <span class="text-slate-300 font-normal">(2.450 ulasan)</span>
+                </span>
+                <span>•</span>
+                <span><i class="fa-solid fa-layer-group text-brand-400 mr-1"></i> Bisnis &amp; Teknologi</span>
+                <span>•</span>
+                <span class="font-bold text-emerald-400 bg-emerald-500/10 px-2.5 py-0.5 rounded-full border border-emerald-400/20">
+                  4 Bab Lengkap Tersedia
+                </span>
+              </div>
+
+              <div class="pt-3 flex flex-wrap items-center justify-center md:justify-start gap-3">
+                <button
+                  id="btn-featured-buy"
+                  type="button"
+                  data-book-id="book-ai-future"
+                  class="px-5 py-3 rounded-xl bg-brand-500 hover:bg-brand-600 text-white font-bold text-sm shadow-lg shadow-brand-500/30 transition-all active:scale-95 flex items-center gap-2"
+                >
+                  <i class="fa-solid fa-plus-circle"></i>
+                  <span id="featured-buy-label">Beli • Rp 89.000</span>
+                </button>
+                <button
+                  id="btn-featured-preview"
+                  type="button"
+                  data-book-id="book-ai-future"
+                  class="px-5 py-3 rounded-xl bg-white/10 hover:bg-white/20 text-white font-semibold text-sm border border-white/20 backdrop-blur-sm transition-all active:scale-95 flex items-center gap-2"
+                >
+                  <i class="fa-solid fa-book-open"></i>
+                  <span>Pratinjau / Baca Sampel</span>
+                </button>
+              </div>
+            </div>
+
+            <!-- Visual Sampul Buku Featured -->
+            <div class="w-40 sm:w-48 lg:w-52 shrink-0">
+              <div class="book-cover-3d rounded-2xl overflow-hidden shadow-2xl border border-white/15 aspect-[3/4] bg-gradient-to-br from-indigo-500 via-brand-600 to-slate-900 p-5 flex flex-col justify-between relative">
+                <div class="book-spine-overlay absolute inset-0 pointer-events-none"></div>
+                <div class="flex items-center justify-between text-[10px] font-bold uppercase tracking-widest text-indigo-200">
+                  <span>BookVerse Original</span>
+                  <i class="fa-solid fa-microchip text-sm"></i>
+                </div>
+                <div class="my-auto py-2">
+                  <div class="w-10 h-1 bg-amber-400 rounded-full mb-3"></div>
+                  <h3 class="font-extrabold text-lg sm:text-xl text-white leading-snug">Arsitektur Masa Depan</h3>
+                  <p class="text-[11px] text-indigo-100 mt-1">AI &amp; Revolusi Kreatif</p>
+                </div>
+                <div class="pt-2 border-t border-white/15 flex items-center justify-between text-[11px] text-indigo-100 font-medium">
+                  <span>Rendra Wijaya</span>
+                  <span class="px-1.5 py-0.5 rounded bg-white/15 text-[9px] font-bold">EDISI 2026</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Baris Filter Kategori & Info Hasil -->
+        <div class="space-y-4">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div>
+              <h2 class="text-xl font-extrabold text-slate-900 flex items-center gap-2">
+                <span>Eksplorasi Katalog Buku</span>
+                <span id="catalog-result-badge" class="text-xs font-bold px-2.5 py-0.5 rounded-full bg-slate-200 text-slate-700">8 Buku</span>
+              </h2>
+              <p class="text-xs sm:text-sm text-slate-500">Pilih buku favorit Anda, baca sampel gratis, atau tambahkan ke perpustakaan pribadi.</p>
+            </div>
+
+            <!-- Sortir Katalog -->
+            <div class="flex items-center gap-2 self-start sm:self-auto">
+              <label for="select-sort-books" class="text-xs font-semibold text-slate-500">Urutkan:</label>
+              <select
+                id="select-sort-books"
+                class="text-xs sm:text-sm font-semibold bg-white border border-slate-200 rounded-xl px-3 py-2 text-slate-700 focus:outline-none focus:border-brand-500"
+              >
+                <option value="popular">Paling Populer</option>
+                <option value="rating">Rating Tertinggi</option>
+                <option value="price-asc">Harga: Terendah / Gratis</option>
+                <option value="price-desc">Harga: Tertinggi</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Tombol Filter Kategori -->
+          <div id="category-filter-bar" class="flex items-center gap-2 overflow-x-auto pb-2 no-scrollbar">
+            <button type="button" data-category="Semua" class="cat-pill shrink-0 px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold transition-all">
+              <i class="fa-solid fa-border-all mr-1.5"></i>Semua
+            </button>
+            <button type="button" data-category="Fiksi/Novel" class="cat-pill shrink-0 px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold transition-all">
+              <i class="fa-solid fa-feather-pointed mr-1.5"></i>Fiksi/Novel
+            </button>
+            <button type="button" data-category="Bisnis & Teknologi" class="cat-pill shrink-0 px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold transition-all">
+              <i class="fa-solid fa-briefcase mr-1.5"></i>Bisnis &amp; Teknologi
+            </button>
+            <button type="button" data-category="Pengembangan Diri" class="cat-pill shrink-0 px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold transition-all">
+              <i class="fa-solid fa-seedling mr-1.5"></i>Pengembangan Diri
+            </button>
+            <button type="button" data-category="Komik/Manga" class="cat-pill shrink-0 px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold transition-all">
+              <i class="fa-solid fa-wand-magic-sparkles mr-1.5"></i>Komik/Manga
+            </button>
+          </div>
+        </div>
+
+        <!-- Grid Kartu Buku Katalog -->
+        <div id="store-books-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
+          <!-- Dirender secara dinamis oleh JavaScript -->
+        </div>
+
+        <!-- State Kosong Pencarian -->
+        <div id="store-empty-state" class="hidden bg-white rounded-3xl border border-slate-200/80 p-10 text-center max-w-md mx-auto my-6">
+          <div class="w-14 h-14 rounded-2xl bg-slate-100 text-slate-400 flex items-center justify-center mx-auto mb-4 text-2xl">
+            <i class="fa-solid fa-magnifying-glass"></i>
+          </div>
+          <h3 class="text-base font-bold text-slate-800 mb-1">Buku Tidak Ditemukan</h3>
+          <p class="text-xs text-slate-500 mb-4">Tidak ada buku yang cocok dengan kata kunci atau filter kategori yang Anda pilih.</p>
+          <button
+            id="btn-reset-filter"
+            type="button"
+            class="px-4 py-2 rounded-xl bg-brand-500 hover:bg-brand-600 text-white text-xs font-semibold transition-all"
+          >
+            Tampilkan Semua Buku
+          </button>
+        </div>
+
+      </section>
+
+      <!-- ======================================================================
+           HALAMAN 2: PERPUSTAKAAN SAYA (MY LIBRARY)
+           ====================================================================== -->
+      <section id="view-library" class="hidden space-y-6">
+        
+        <!-- Header Perpustakaan & Ringkasan Statistik -->
+        <div class="bg-white rounded-3xl p-6 border border-slate-200/80 shadow-sm">
+          <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-6 border-b border-slate-100">
+            <div>
+              <div class="inline-flex items-center gap-1.5 text-xs font-bold text-brand-600 uppercase tracking-wider mb-1">
+                <i class="fa-solid fa-layer-group"></i>
+                <span>Koleksi Pribadi Tersinkronisasi</span>
+              </div>
+              <h1 class="text-2xl font-extrabold text-slate-900">Perpustakaan Saya</h1>
+              <p class="text-xs sm:text-sm text-slate-500">Semua buku yang telah Anda beli, klaim, atau unggah sendiri tersimpan aman di browser ini.</p>
+            </div>
+            <div class="flex flex-wrap items-center gap-2.5">
+              <button
+                id="btn-library-upload"
+                type="button"
+                class="px-4 py-2.5 rounded-xl bg-brand-500 hover:bg-brand-600 text-white text-xs sm:text-sm font-semibold shadow-sm shadow-brand-500/20 transition-all flex items-center gap-2"
+              >
+                <i class="fa-solid fa-plus"></i>
+                <span>Tambah E-Book Sendiri</span>
+              </button>
+              <button
+                id="btn-library-explore"
+                type="button"
+                class="px-4 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs sm:text-sm font-semibold transition-all flex items-center gap-2"
+              >
+                <i class="fa-solid fa-store"></i>
+                <span>Cari Buku Baru</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- 4 Kartu Metrik Perpustakaan -->
+          <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-5">
+            <div class="p-3.5 rounded-2xl bg-slate-50 border border-slate-200/60">
+              <p class="text-[11px] font-semibold text-slate-500">Total Koleksi</p>
+              <p id="stat-total-owned" class="text-xl font-extrabold text-slate-900 mt-0.5">0 Buku</p>
+            </div>
+            <div class="p-3.5 rounded-2xl bg-brand-50/60 border border-brand-100">
+              <p class="text-[11px] font-semibold text-brand-600">Sedang Dibaca</p>
+              <p id="stat-in-progress" class="text-xl font-extrabold text-brand-700 mt-0.5">0 Buku</p>
+            </div>
+            <div class="p-3.5 rounded-2xl bg-emerald-50/70 border border-emerald-100">
+              <p class="text-[11px] font-semibold text-emerald-700">Selesai (100%)</p>
+              <p id="stat-completed" class="text-xl font-extrabold text-emerald-700 mt-0.5">0 Buku</p>
+            </div>
+            <div class="p-3.5 rounded-2xl bg-amber-50/70 border border-amber-100">
+              <p class="text-[11px] font-semibold text-amber-700">Halaman Ditandai</p>
+              <p id="stat-bookmarks" class="text-xl font-extrabold text-amber-700 mt-0.5">0 Bookmark</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Sub-Filter Perpustakaan -->
+        <div class="flex items-center justify-between gap-2 flex-wrap">
+          <div id="library-filter-tabs" class="flex items-center gap-2 overflow-x-auto pb-1">
+            <button type="button" data-lib-filter="all" class="lib-tab-btn px-3.5 py-2 rounded-xl text-xs font-bold transition-all">
+              Semua Koleksi
+            </button>
+            <button type="button" data-lib-filter="reading" class="lib-tab-btn px-3.5 py-2 rounded-xl text-xs font-bold transition-all">
+              Sedang Dibaca
+            </button>
+            <button type="button" data-lib-filter="bookmarked" class="lib-tab-btn px-3.5 py-2 rounded-xl text-xs font-bold transition-all">
+              Dengan Bookmark
+            </button>
+            <button type="button" data-lib-filter="custom" class="lib-tab-btn px-3.5 py-2 rounded-xl text-xs font-bold transition-all">
+              E-Book Buatan Sendiri
+            </button>
+          </div>
+        </div>
+
+        <!-- Grid Buku di Perpustakaan Saya -->
+        <div id="library-books-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+          <!-- Dirender secara dinamis oleh JavaScript -->
+        </div>
+
+        <!-- State Kosong Perpustakaan -->
+        <div id="library-empty-state" class="hidden bg-white rounded-3xl border border-slate-200/80 p-10 text-center max-w-lg mx-auto">
+          <div class="w-16 h-16 rounded-2xl bg-brand-50 text-brand-500 flex items-center justify-center mx-auto mb-4 text-2xl">
+            <i class="fa-solid fa-book-bookmark"></i>
+          </div>
+          <h3 class="text-lg font-bold text-slate-900 mb-1">Belum Ada Buku di Kategori Ini</h3>
+          <p class="text-xs sm:text-sm text-slate-500 mb-5">
+            Tambahkan buku dari katalog Toko BookVerse atau unggah naskah E-Book Anda sendiri untuk mulai membaca.
+          </p>
+          <div class="flex items-center justify-center gap-3">
+            <button
+              id="btn-empty-go-store"
+              type="button"
+              class="px-4 py-2.5 rounded-xl bg-brand-500 hover:bg-brand-600 text-white text-xs font-bold transition-all"
+            >
+              Jelajahi Toko Buku
+            </button>
+            <button
+              id="btn-empty-upload"
+              type="button"
+              class="px-4 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold transition-all"
+            >
+              Upload E-Book Sendiri
+            </button>
+          </div>
+        </div>
+
+      </section>
+
+      <!-- ======================================================================
+           HALAMAN 3: INTERACTIVE E-BOOK READER VIEW (FITUR UNGGULAN)
+           ====================================================================== -->
+      <section id="view-reader" class="hidden">
+        
+        <!-- Wrapper Tema Reader (Light / Sepia / Dark) -->
+        <div id="reader-theme-wrapper" class="reader-theme-light rounded-3xl border border-slate-200/90 overflow-hidden transition-colors duration-300 shadow-lg">
+          
+          <!-- TOP READER CONTROL TOOLBAR -->
+          <div class="reader-toolbar sticky top-16 z-20 px-4 sm:px-6 py-3 border-b backdrop-blur-md flex flex-wrap items-center justify-between gap-3">
+            
+            <!-- Kiri: Kembali & Info Buku Aktif -->
+            <div class="flex items-center gap-3 min-w-0">
+              <button
+                id="btn-reader-back"
+                type="button"
+                title="Kembali ke Perpustakaan"
+                class="w-9 h-9 rounded-xl border border-current/15 flex items-center justify-center hover:bg-brand-500 hover:text-white hover:border-brand-500 transition-colors shrink-0"
+              >
+                <i class="fa-solid fa-arrow-left text-sm"></i>
+              </button>
+              <div class="min-w-0">
+                <div class="flex items-center gap-2">
+                  <h2 id="reader-book-title" class="font-bold text-sm sm:text-base truncate">Judul Buku</h2>
+                  <span id="reader-preview-badge" class="hidden px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/20 text-amber-600 border border-amber-500/30 shrink-0">
+                    Mode Sampel
+                  </span>
+                </div>
+                <p id="reader-book-chapter-subtitle" class="text-[11px] opacity-75 truncate">Bab 1 • Pendahuluan</p>
+              </div>
+            </div>
+
+            <!-- Tengah/Kanan: Kontrol Kustomisasi Reader -->
+            <div class="flex items-center flex-wrap gap-1.5 sm:gap-2">
+              
+              <!-- Tombol Daftar Isi (Table of Contents Drawer) -->
+              <button
+                id="btn-reader-toc"
+                type="button"
+                class="px-3 py-1.5 rounded-xl border border-current/15 text-xs font-semibold hover:bg-brand-500 hover:text-white hover:border-brand-500 transition-all flex items-center gap-1.5"
+                title="Buka Daftar Isi & Bookmark"
+              >
+                <i class="fa-solid fa-list-ul"></i>
+                <span class="hidden sm:inline">Daftar Isi</span>
+              </button>
+
+              <!-- Pengatur Ukuran Font (A- / A+) -->
+              <div class="flex items-center rounded-xl border border-current/15 overflow-hidden text-xs font-bold">
+                <button
+                  id="btn-font-decrease"
+                  type="button"
+                  title="Perkecil Ukuran Teks (A-)"
+                  class="px-2.5 py-1.5 hover:bg-brand-500 hover:text-white transition-colors"
+                >
+                  A-
+                </button>
+                <span id="reader-font-size-label" class="px-2 py-1 text-[11px] opacity-80 border-x border-current/10 select-none">18px</span>
+                <button
+                  id="btn-font-increase"
+                  type="button"
+                  title="Perbesar Ukuran Teks (A+)"
+                  class="px-2.5 py-1.5 hover:bg-brand-500 hover:text-white transition-colors"
+                >
+                  A+
+                </button>
+              </div>
+
+              <!-- Pemilih Jenis Font (Serif / Sans-Serif) -->
+              <div class="flex items-center rounded-xl border border-current/15 p-0.5 text-xs font-semibold">
+                <button
+                  id="btn-font-serif"
+                  type="button"
+                  class="px-2.5 py-1 rounded-lg transition-all font-serif"
+                  title="Font Serif (Klasik Buku Cetak)"
+                >
+                  Serif
+                </button>
+                <button
+                  id="btn-font-sans"
+                  type="button"
+                  class="px-2.5 py-1 rounded-lg transition-all font-sans"
+                  title="Font Sans-Serif (Modern Bersih)"
+                >
+                  Sans
+                </button>
+              </div>
+
+              <!-- Pemilih Mode Latar Belakang: Light / Sepia / Dark -->
+              <div class="flex items-center rounded-xl border border-current/15 p-0.5 gap-1">
+                <button
+                  type="button"
+                  data-reader-theme="light"
+                  title="Mode Terang (Light Mode)"
+                  class="reader-theme-btn w-7 h-7 rounded-lg bg-white text-slate-800 border border-slate-300 flex items-center justify-center text-xs transition-transform"
+                >
+                  <i class="fa-solid fa-sun text-amber-500"></i>
+                </button>
+                <button
+                  type="button"
+                  data-reader-theme="sepia"
+                  title="Mode Sepia (Kenyamanan Mata)"
+                  class="reader-theme-btn w-7 h-7 rounded-lg bg-[#F4ECD8] text-[#433422] border border-[#D3C4A8] flex items-center justify-center text-xs transition-transform"
+                >
+                  <i class="fa-solid fa-mug-hot text-amber-800"></i>
+                </button>
+                <button
+                  type="button"
+                  data-reader-theme="dark"
+                  title="Mode Malam (Dark/Night Mode)"
+                  class="reader-theme-btn w-7 h-7 rounded-lg bg-slate-900 text-slate-100 border border-slate-700 flex items-center justify-center text-xs transition-transform"
+                >
+                  <i class="fa-solid fa-moon text-indigo-300"></i>
+                </button>
+              </div>
+
+              <!-- Pengatur Lebar Bacaan (Khusus Layar Desktop) -->
+              <button
+                id="btn-reader-width"
+                type="button"
+                title="Ubah Lebar Margin Bacaan (Desktop)"
+                class="hidden md:inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl border border-current/15 text-xs font-semibold hover:bg-brand-500 hover:text-white transition-colors"
+              >
+                <i class="fa-solid fa-arrows-left-right-to-line"></i>
+                <span id="reader-width-label">Sedang</span>
+              </button>
+
+              <!-- Tombol Bookmark Halaman -->
+              <button
+                id="btn-reader-bookmark"
+                type="button"
+                title="Tandai halaman ini (Bookmark)"
+                class="px-3 py-1.5 rounded-xl border border-current/15 text-xs font-bold transition-all flex items-center gap-1.5"
+              >
+                <i id="icon-reader-bookmark" class="fa-regular fa-bookmark"></i>
+                <span id="label-reader-bookmark" class="hidden sm:inline">Tandai</span>
+              </button>
+
+            </div>
+          </div>
+
+          <!-- Progress Bar Membaca Tipis di Bawah Toolbar -->
+          <div class="w-full h-1 bg-current/10 overflow-hidden">
+            <div id="reader-top-progress-bar" class="h-full bg-brand-500 transition-all duration-300" style="width: 20%"></div>
+          </div>
+
+          <!-- AREA KERTAS / HALAMAN BACAAN UTAMA -->
+          <div class="p-4 sm:p-8 lg:p-12 min-h-[65vh] flex flex-col items-center justify-between">
+            
+            <!-- Kartu Halaman Buku -->
+            <article
+              id="reader-page-container"
+              class="reader-page-card reader-content-transition w-full max-w-2xl rounded-2xl border p-6 sm:p-10 lg:p-12 my-auto"
+            >
+              <!-- Header Bab di Dalam Halaman -->
+              <div class="flex items-center justify-between gap-2 pb-4 mb-6 border-b border-current/10 text-xs opacity-70">
+                <span id="reader-page-chapter-tag" class="font-bold uppercase tracking-wider text-brand-500">BAB 1</span>
+                <span id="reader-page-bookmark-indicator" class="hidden items-center gap-1 text-amber-500 font-bold">
+                  <i class="fa-solid fa-bookmark"></i> Halaman Ditandai
+                </span>
+              </div>
+
+              <!-- Judul Bab (Hanya tampil di awal bab atau setiap halaman dengan sub-header jelas) -->
+              <h3 id="reader-page-heading" class="text-xl sm:text-2xl font-bold mb-6 leading-snug">
+                Judul Bab
+              </h3>
+
+              <!-- Isi Teks Bab Buku -->
+              <div
+                id="reader-page-body"
+                class="space-y-5 leading-relaxed text-justify select-text"
+                style="font-size: 18px; line-height: 1.85;"
+              >
+                <!-- Paragraf dirender secara dinamis -->
+              </div>
+
+              <!-- Banner Ajakan Beli jika sedang dalam Mode Sampel / Belum Dimiliki -->
+              <div id="reader-sample-cta" class="hidden mt-8 p-4 rounded-2xl bg-brand-500/10 border border-brand-500/30 flex flex-col sm:flex-row items-center justify-between gap-4">
+                <div class="text-xs sm:text-sm">
+                  <p class="font-bold text-brand-500">Anda sedang membaca Pratinjau / Sampel Buku</p>
+                  <p class="opacity-80">Tambahkan buku ini ke Perpustakaan Saya agar progres halaman &amp; bookmark tersimpan permanen di koleksi Anda.</p>
+                </div>
+                <button
+                  id="btn-reader-claim-book"
+                  type="button"
+                  class="shrink-0 px-4 py-2 rounded-xl bg-brand-500 hover:bg-brand-600 text-white text-xs font-bold shadow-sm transition-all"
+                >
+                  Tambah ke Perpustakaan
+                </button>
+              </div>
+            </article>
+
+            <!-- BOTTOM READER NAVIGATION BAR (Ramah Jempol di Mobile & Desktop) -->
+            <div class="w-full max-w-2xl mt-6 pt-2 flex flex-col sm:flex-row items-center justify-between gap-4">
+              <div class="flex items-center justify-between w-full sm:w-auto gap-3">
+                <button
+                  id="btn-prev-page"
+                  type="button"
+                  class="flex-1 sm:flex-initial px-5 py-3 rounded-xl border border-current/15 font-bold text-xs sm:text-sm hover:bg-brand-500 hover:text-white hover:border-brand-500 disabled:opacity-35 disabled:pointer-events-none transition-all flex items-center justify-center gap-2"
+                >
+                  <i class="fa-solid fa-chevron-left"></i>
+                  <span>Halaman Sebelum</span>
+                </button>
+
+                <button
+                  id="btn-next-page"
+                  type="button"
+                  class="flex-1 sm:flex-initial px-5 py-3 rounded-xl bg-brand-500 hover:bg-brand-600 text-white font-bold text-xs sm:text-sm disabled:opacity-35 disabled:pointer-events-none transition-all flex items-center justify-center gap-2 shadow-md shadow-brand-500/20"
+                >
+                  <span>Halaman Sesudah</span>
+                  <i class="fa-solid fa-chevron-right"></i>
+                </button>
+              </div>
+
+              <!-- Indikator Halaman & Persentase -->
+              <div class="flex items-center gap-3 text-xs font-semibold opacity-85">
+                <span id="reader-page-counter">Halaman 1 dari 5</span>
+                <span>•</span>
+                <span id="reader-progress-percent" class="text-brand-500 font-bold">20% Selesai</span>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+      </section>
+
+    </main>
+  </div>
+
+  <!-- ==========================================================================
+       MOBILE BOTTOM NAVIGATION BAR (THUMB-FRIENDLY)
+       ========================================================================== -->
+  <nav
+    aria-label="Mobile Bottom Navigation"
+    class="lg:hidden fixed bottom-0 inset-x-0 z-30 bg-white/95 backdrop-blur-md border-t border-slate-200 px-2 py-1.5 flex items-center justify-around shadow-lg"
+  >
+    <button
+      type="button"
+      data-nav-target="explore"
+      class="nav-btn flex-1 py-1.5 rounded-xl flex flex-col items-center justify-center gap-1 text-[11px] font-bold transition-colors"
+    >
+      <i class="fa-solid fa-compass text-base"></i>
+      <span>Toko / Explore</span>
+    </button>
+
+    <button
+      type="button"
+      data-nav-target="library"
+      class="nav-btn relative flex-1 py-1.5 rounded-xl flex flex-col items-center justify-center gap-1 text-[11px] font-bold transition-colors"
+    >
+      <div class="relative">
+        <i class="fa-solid fa-bookmark text-base"></i>
+        <span
+          id="mobile-library-badge"
+          class="absolute -top-1.5 -right-3 px-1.5 py-0.2 rounded-full text-[9px] font-extrabold bg-brand-500 text-white"
+        >0</span>
+      </div>
+      <span>Perpustakaan</span>
+    </button>
+
+    <button
+      type="button"
+      data-nav-target="reader"
+      class="nav-btn flex-1 py-1.5 rounded-xl flex flex-col items-center justify-center gap-1 text-[11px] font-bold transition-colors"
+    >
+      <i class="fa-solid fa-book-open-reader text-base"></i>
+      <span>E-Book Reader</span>
+    </button>
+  </nav>
+
+  <!-- ==========================================================================
+       DRAWER / MODAL DAFTAR ISI (TABLE OF CONTENTS) & BOOKMARK
+       ========================================================================== -->
+  <div
+    id="modal-toc"
+    class="fixed inset-0 z-50 hidden bg-slate-900/60 backdrop-blur-sm flex justify-end transition-opacity"
+    role="dialog"
+    aria-modal="true"
+  >
+    <div class="w-full max-w-md bg-white h-full shadow-2xl flex flex-col justify-between overflow-hidden animate-slide-left">
+      <!-- Header Drawer -->
+      <div class="p-5 border-b border-slate-200 flex items-center justify-between">
+        <div>
+          <h3 class="font-extrabold text-base text-slate-900 flex items-center gap-2">
+            <i class="fa-solid fa-list-check text-brand-500"></i>
+            <span>Navigasi Bab &amp; Bookmark</span>
+          </h3>
+          <p id="toc-book-title" class="text-xs text-slate-500 truncate mt-0.5">Judul Buku</p>
+        </div>
+        <button
+          id="btn-close-toc"
+          type="button"
+          class="w-8 h-8 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-600 flex items-center justify-center"
+        >
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+
+      <!-- Isi Daftar Bab & Halaman yang Ditandai -->
+      <div class="flex-1 overflow-y-auto p-5 space-y-6">
+        <!-- Seksi Daftar Isi Bab -->
+        <div>
+          <h4 class="text-xs font-bold uppercase tracking-wider text-slate-400 mb-3">
+            Daftar Isi (Table of Contents)
+          </h4>
+          <div id="toc-chapters-list" class="space-y-2">
+            <!-- Dirender dinamis -->
+          </div>
+        </div>
+
+        <!-- Seksi Halaman yang Di-bookmark -->
+        <div class="pt-4 border-t border-slate-200">
+          <h4 class="text-xs font-bold uppercase tracking-wider text-slate-400 mb-3 flex items-center justify-between">
+            <span>Penanda Halaman (Bookmark)</span>
+            <span id="toc-bookmarks-count" class="text-amber-600 bg-amber-50 px-2 py-0.5 rounded-full text-[10px]">0</span>
+          </h4>
+          <div id="toc-bookmarks-list" class="space-y-2">
+            <!-- Dirender dinamis -->
+          </div>
+        </div>
+      </div>
+
+      <!-- Footer Drawer -->
+      <div class="p-4 bg-slate-50 border-t border-slate-200 text-center">
+        <button
+          id="btn-close-toc-footer"
+          type="button"
+          class="w-full py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold transition-all"
+        >
+          Tutup Daftar Isi
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==========================================================================
+       MODAL KONFIRMASI TRANSAKSI / PEMBELIAN SUKSES
+       ========================================================================== -->
+  <div
+    id="modal-purchase-success"
+    class="fixed inset-0 z-50 hidden bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4"
+    role="dialog"
+    aria-modal="true"
+  >
+    <div class="bg-white rounded-3xl max-w-md w-full p-6 sm:p-7 shadow-2xl border border-slate-100 text-center space-y-4">
+      <div class="w-16 h-16 rounded-2xl bg-emerald-100 text-emerald-600 flex items-center justify-center mx-auto text-3xl shadow-inner">
+        <i class="fa-solid fa-circle-check"></i>
+      </div>
+
+      <div class="space-y-1">
+        <span class="inline-block px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-emerald-50 text-emerald-700 border border-emerald-200">
+          Transaksi Berhasil
+        </span>
+        <h3 class="text-xl font-extrabold text-slate-900" id="purchase-modal-title">Buku Ditambahkan!</h3>
+        <p class="text-xs sm:text-sm text-slate-500 leading-relaxed" id="purchase-modal-desc">
+          Buku telah berhasil ditambahkan ke menu <strong>Perpustakaan Saya</strong> dan siap dibaca kapan saja.
+        </p>
+      </div>
+
+      <!-- Ringkasan Kartu Buku yang Dibeli -->
+      <div class="p-3.5 rounded-2xl bg-slate-50 border border-slate-200/80 flex items-center gap-3.5 text-left">
+        <div id="purchase-modal-cover" class="w-12 h-16 rounded-lg shrink-0 bg-brand-600 flex items-center justify-center text-white font-bold text-xs">
+          BV
+        </div>
+        <div class="min-w-0 flex-1">
+          <p id="purchase-modal-book-title" class="font-bold text-sm text-slate-900 truncate">Judul Buku</p>
+          <p id="purchase-modal-book-author" class="text-xs text-slate-500 truncate">Nama Penulis</p>
+          <p id="purchase-modal-book-price" class="text-xs font-bold text-emerald-600 mt-1">Tersimpan di Perpustakaan Saya</p>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5 pt-2">
+        <button
+          id="btn-modal-read-now"
+          type="button"
+          class="w-full py-2.5 px-4 rounded-xl bg-brand-500 hover:bg-brand-600 text-white font-bold text-xs sm:text-sm shadow-md shadow-brand-500/20 transition-all flex items-center justify-center gap-2"
+        >
+          <i class="fa-solid fa-book-open"></i>
+          <span>Baca Sekarang</span>
+        </button>
+        <button
+          id="btn-modal-go-library"
+          type="button"
+          class="w-full py-2.5 px-4 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs sm:text-sm transition-all flex items-center justify-center gap-2"
+        >
+          <i class="fa-solid fa-bookmark"></i>
+          <span>Ke Perpustakaan</span>
+        </button>
+      </div>
+
+      <button
+        id="btn-close-purchase-modal"
+        type="button"
+        class="text-xs font-semibold text-slate-400 hover:text-slate-600 pt-1"
+      >
+        Tetap di Halaman Toko
+      </button>
+    </div>
+  </div>
+
+  <!-- ==========================================================================
+       MODAL TAMBAH E-BOOK SENDIRI (UPLOAD DUMMY INTERAKTIF)
+       ========================================================================== -->
+  <div
+    id="modal-upload-ebook"
+    class="fixed inset-0 z-50 hidden bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto"
+    role="dialog"
+    aria-modal="true"
+  >
+    <div class="bg-white rounded-3xl max-w-lg w-full p-6 sm:p-7 shadow-2xl border border-slate-100 my-8">
+      <div class="flex items-center justify-between pb-4 border-b border-slate-100">
+        <div>
+          <h3 class="text-lg font-extrabold text-slate-900 flex items-center gap-2">
+            <i class="fa-solid fa-cloud-arrow-up text-brand-500"></i>
+            <span>Tambah E-Book Sendiri</span>
+          </h3>
+          <p class="text-xs text-slate-500 mt-0.5">Tulis atau tempel naskah bab Anda sendiri untuk langsung diuji di Interactive Reader.</p>
+        </div>
+        <button
+          id="btn-close-upload-modal"
+          type="button"
+          class="w-8 h-8 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-600 flex items-center justify-center"
+        >
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+
+      <form id="form-upload-ebook" class="space-y-4 mt-4">
+        <div>
+          <label for="input-ebook-title" class="block text-xs font-bold text-slate-700 mb-1">Judul Buku *</label>
+          <input
+            id="input-ebook-title"
+            type="text"
+            required
+            placeholder="Contoh: Catatan Perjalanan di Kyoto"
+            class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20"
+          />
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label for="input-ebook-author" class="block text-xs font-bold text-slate-700 mb-1">Nama Penulis *</label>
+            <input
+              id="input-ebook-author"
+              type="text"
+              required
+              placeholder="Contoh: Nadia Kusuma"
+              class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20"
+            />
+          </div>
+          <div>
+            <label for="input-ebook-category" class="block text-xs font-bold text-slate-700 mb-1">Kategori</label>
+            <select
+              id="input-ebook-category"
+              class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm bg-white focus:outline-none focus:border-brand-500"
+            >
+              <option value="Fiksi/Novel">Fiksi/Novel</option>
+              <option value="Bisnis & Teknologi">Bisnis &amp; Teknologi</option>
+              <option value="Pengembangan Diri">Pengembangan Diri</option>
+              <option value="Komik/Manga">Komik/Manga</option>
+            </select>
+          </div>
+        </div>
+
+        <div>
+          <label for="input-ebook-chapter-title" class="block text-xs font-bold text-slate-700 mb-1">Judul Bab Pertama</label>
+          <input
+            id="input-ebook-chapter-title"
+            type="text"
+            placeholder="Contoh: Bab 1 — Awal Mula Sebuah Langkah"
+            class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20"
+          />
+        </div>
+
+        <div>
+          <div class="flex items-center justify-between mb-1">
+            <label for="input-ebook-content" class="block text-xs font-bold text-slate-700">Isi Teks Bab *</label>
+            <button
+              id="btn-fill-sample-text"
+              type="button"
+              class="text-[11px] font-semibold text-brand-600 hover:underline"
+            >
+              + Isi Contoh Naskah Otomatis
+            </button>
+          </div>
+          <textarea
+            id="input-ebook-content"
+            rows="6"
+            required
+            placeholder="Ketik atau tempel beberapa paragraf isi buku di sini. Sistem akan otomatis membaginya menjadi halaman-halaman interaktif yang nyaman dibaca..."
+            class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20"
+          ></textarea>
+          <p class="text-[11px] text-slate-400 mt-1">
+            Tip: Pisahkan paragraf dengan baris baru. Naskah panjang akan otomatis dipecah menjadi beberapa halaman &amp; bab di Reader.
+          </p>
+        </div>
+
+        <div class="flex items-center justify-end gap-2.5 pt-3 border-t border-slate-100">
+          <button
+            id="btn-cancel-upload"
+            type="button"
+            class="px-4 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold transition-all"
+          >
+            Batal
+          </button>
+          <button
+            type="submit"
+            class="px-5 py-2.5 rounded-xl bg-brand-500 hover:bg-brand-600 text-white text-xs font-bold shadow-md shadow-brand-500/25 transition-all flex items-center gap-2"
+          >
+            <i class="fa-solid fa-floppy-disk"></i>
+            <span>Simpan &amp; Buka di Reader</span>
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ==========================================================================
+       TOAST NOTIFICATION CONTAINER
+       ========================================================================== -->
+  <div id="toast-container" class="fixed bottom-20 lg:bottom-6 right-4 z-50 flex flex-col gap-2 pointer-events-none"></div>
+
+  <!-- ==========================================================================
+       VANILLA JAVASCRIPT APPLICATION LOGIC
+       ========================================================================== -->
+  <script>
+    /**
+     * BOOKVERSE — SINGLE PAGE APPLICATION & INTERACTIVE E-BOOK READER
+     * Menggunakan Vanilla JavaScript murni dan localStorage dengan fallback aman.
+     */
+
+    // --------------------------------------------------------------------------
+    // 1. DATA KATALOG BUKU BAWAAN (DENGAN TEKS BAB NYATA & MULTI-HALAMAN)
+    // --------------------------------------------------------------------------
+    const DEFAULT_BOOKS = [
+      {
+        id: 'book-ai-future',
+        title: 'Arsitektur Masa Depan: AI & Revolusi Kreatif',
+        author: 'Prof. Rendra Wijaya, Ph.D.',
+        category: 'Bisnis & Teknologi',
+        rating: 4.9,
+        reviewsCount: 2450,
+        price: 89000,
+        isFree: false,
+        coverGradient: 'from-indigo-600 via-brand-600 to-slate-900',
+        coverAccent: '#FBBF24',
+        coverIcon: 'fa-microchip',
+        badge: 'Trending #1',
+        synopsis: 'Panduan strategis memahami kolaborasi kecerdasan buatan dan intuisi manusia dalam membangun produk digital masa depan.',
+        pages: [
+          {
+            chapterNumber: 1,
+            chapterTitle: 'Bab 1: Gelombang Baru Kolaborasi Manusia dan Mesin',
+            content: [
+              'Sejarah peradaban manusia selalu ditandai oleh alat-alat yang kita ciptakan untuk memperluas jangkauan pikiran. Ketika mesin cetak Johannes Gutenberg lahir pada abad ke-15, informasi yang sebelumnya terkunci di biara-biara eksklusif mendadak mengalir ke ruang publik. Kini, di pertengahan dekade 2020-an, kita berdiri di persimpangan sejarah yang jauh lebih besar: kemunculan sistem kecerdasan generatif yang mampu menalar, menyusun kode, dan merancang gagasan bersama manusia.',
+              'Namun, kesalahpahaman terbesar para pemimpin bisnis hari ini adalah memandang kecerdasan buatan semata-mata sebagai mesin pemangkas biaya. Pendekatan semacam itu hanya menghasilkan efisiensi jangka pendek yang dangkal. Organisasi yang benar-benar unggul justru menjadikan AI sebagai kopilot kognitif—sebuah mitra diskusi yang mempercepat eksperimen dari hitungan bulan menjadi hitungan jam.',
+              'Dalam bab pembuka ini, kita akan membedah bagaimana pergeseran dari otomatisasi mekanis menuju augmentasi kreatif membuka peluang ekonomi baru bagi para desainer, penulis, insinyur perangkat lunak, dan wirausahawan independen di seluruh Asia Tenggara.'
+            ]
+          },
+          {
+            chapterNumber: 1,
+            chapterTitle: 'Bab 1: Gelombang Baru Kolaborasi Manusia dan Mesin (Lanjutan)',
+            content: [
+              'Mari kita amati sebuah studio desain produk di Jakarta atau Bandung hari ini. Lima tahun silam, membuat prototipe aplikasi e-commerce yang fungsional membutuhkan koordinasi berminggu-minggu antara tim riset pengguna, desainer antarmuka, dan pengembang front-end. Kini, seorang desainer yang memahami arsitektur sistem dapat memvalidasi tiga variasi prototipe interaktif dalam satu sore.',
+              'Ketika hambatan teknis untuk mengeksekusi ide menurun drastis, nilai keahlian manusia tidak lagi terletak pada seberapa cepat seseorang menghafal sintaks, melainkan pada ketajaman empati, kurasi estetika, dan keberanian mengajukan pertanyaan yang tepat. Mesin sangat piawai memberikan jawaban, tetapi manusialah yang menentukan masalah mana yang layak dipecahkan.',
+              'Prinsip pertama Arsitektur Masa Depan sangat sederhana: jangan pernah menyerahkan kendali visi produk Anda kepada algoritma, tetapi gunakan algoritma untuk menguji seribu kemungkinan sebelum kompetitor Anda menyelesaikan rapat pertama mereka.'
+            ]
+          },
+          {
+            chapterNumber: 2,
+            chapterTitle: 'Bab 2: Ekonomi Kurasi & Diferensiasi Rasa',
+            content: [
+              'Ketika semua orang memiliki akses ke model bahasa dan generator visual yang sama, dunia akan dibanjiri oleh karya-karya yang "cukup baik" namun terasa seragam. Dalam lautan rata-rata tersebut, apa yang membuat sebuah produk digital atau buku tetap dicintai oleh penggunanya? Jawabannya adalah kepribadian, ketelitian detail, dan konteks lokal yang autentik.',
+              'Perhatikan produk-produk perangkat lunak terbaik yang kita gunakan setiap hari. Pengguna tidak jatuh cinta pada jumlah baris kode di balik layar; mereka jatuh cinta pada betapa mulusnya transisi halaman saat mata mereka lelah di malam hari, atau betapa intuitifnya letak tombol saat diakses dengan satu ibu jari di dalam kereta komuter.',
+              'Itulah yang saya sebut sebagai "Diferensiasi Rasa" (Taste Differentiation). Teknologi dapat menghasilkan kerangka dasar dalam hitungan detik, tetapi sentuhan akhir berupa tipografi yang bernapas, warna yang menenangkan mata, dan narasi yang jujur tetap membutuhkan kepekaan seorang perajin manusia.'
+            ]
+          },
+          {
+            chapterNumber: 3,
+            chapterTitle: 'Bab 3: Membangun Sistem Kerja Anti-Rapuh',
+            content: [
+              'Banyak profesional muda merasa cemas bahwa keahlian yang mereka pelajari di bangku kuliah akan usang sebelum dekade ini berakhir. Kecemasan itu wajar, namun solusinya bukanlah berhenti belajar teknis, melainkan membangun portofolio kebiasaan belajar yang adaptif.',
+              'Pertama, kuasai fondasi dasar yang tidak lekang oleh waktu: logika pemecahan masalah, psikologi perilaku manusia, dan komunikasi tertulis yang jernih. Dalam dunia kerja modern, kemampuan menuliskan spesifikasi yang terstruktur dengan bahasa yang presisi telah menjadi bahasa pemrograman yang paling ampuh.',
+              'Kedua, bangunlah laboratorium kecil Anda sendiri. Jangan menunggu izin perusahaan untuk mencoba teknologi baru. Buatlah proyek akhir pekan, rilis prototipe ke publik, dengarkan masukan pengguna nyata, dan perbaiki secara berkala.'
+            ]
+          },
+          {
+            chapterNumber: 4,
+            chapterTitle: 'Bab 4: Etika, Kepercayaan, dan Masa Depan Humanis',
+            content: [
+              'Pada akhirnya, teknologi hanyalah cermin dari nilai-nilai penciptanya. Semakin canggih algoritma yang kita bangun, semakin besar pula tanggung jawab kita untuk menjaga privasi pengguna, transparansi data, dan inklusivitas akses digital.',
+              'Masa depan bukanlah pertarungan antara manusia melawan mesin, melainkan kolaborasi antara manusia yang peduli dengan teknologi yang memberdayakan. Ketika Anda menutup halaman terakhir buku ini, tanyakan pada diri Anda: karya bermakna apa yang akan Anda bangun esok pagi dengan seluruh peralatan luar biasa yang kini ada di ujung jari Anda?'
+            ]
+          }
+        ]
+      },
+      {
+        id: 'book-filosofi-teras',
+        title: 'Filosofi Teras Digital: Tenang di Era Notifikasi',
+        author: 'Dr. Aris Pratama',
+        category: 'Pengembangan Diri',
+        rating: 4.9,
+        reviewsCount: 3120,
+        price: 0,
+        isFree: true,
+        coverGradient: 'from-emerald-600 via-teal-700 to-slate-900',
+        coverAccent: '#34D399',
+        coverIcon: 'fa-leaf',
+        badge: 'Gratis / Sampel Penuh',
+        synopsis: 'Menerapkan kebijaksanaan Stoikisme kuno untuk menjaga kejernihan pikiran di tengah gempuran algoritma media sosial.',
+        pages: [
+          {
+            chapterNumber: 1,
+            chapterTitle: 'Bab 1: Dikotomi Kendali di Layar Ponsel Kita',
+            content: [
+              'Dua ribu tahun yang lalu, Epictetus mengajarkan satu gagasan yang mengubah hidup jutaan orang: dalam hidup ini, ada hal-hal yang berada di bawah kendali kita, dan ada hal-hal yang berada di luar kendali kita. Di abad ke-21, batas antara keduanya sering kali kabur oleh layar beresolusi tinggi yang menyala di genggaman kita setiap detik.',
+              'Jumlah tanda suka pada unggahan kita, komentar orang asing di internet, berita ekonomi global yang berubah setiap menit, hingga kemacetan lalu lintas pagi hari—semuanya berada di luar kendali langsung kita. Namun, kapan kita meletakkan ponsel, bagaimana kita merespons kritik dengan kepala dingin, dan ke mana kita mengarahkan fokus pagi ini adalah seratus persen milik kita.',
+              'Ketidakbahagiaan manusia modern sering kali berakar dari upaya keras mengendalikan opini algoritma dan orang lain, sambil menelantarkan taman pikiran kita sendiri.'
+            ]
+          },
+          {
+            chapterNumber: 2,
+            chapterTitle: 'Bab 2: Jeda Tiga Detik Sebelum Bereaksi',
+            content: [
+              'Marcus Aurelius menulis dalam catatan hariannya, Meditations, bahwa pikiran kita akan berwarna sesuai dengan pikiran-pikiran yang paling sering kita kunjungi. Jika setiap pagi hal pertama yang kita konsumsi adalah perdebatan sengit di linimasa, maka sepanjang hari batin kita akan berada dalam mode siaga dan defensif.',
+              'Latihan praktis yang dapat Anda terapkan mulai hari ini adalah "Aturan Jeda Tiga Detik". Setiap kali Anda membaca pesan atau surel yang memicu emosi, tarik napas dalam-dalam selama tiga detik sebelum jari Anda menyentuh papan ketik. Tanyakan: "Apakah balasan emosional ini akan memperbaiki keadaan, atau hanya memberi makan ego sesaat?"',
+              'Dalam keheningan tiga detik itulah kebebasan manusia sejati berada. Anda bukan lagi boneka yang ditarik oleh benang notifikasi, melainkan nakhoda atas ketenangan batin Anda sendiri.'
+            ]
+          },
+          {
+            chapterNumber: 3,
+            chapterTitle: 'Bab 3: Merayakan Kecukupan (Digital Minimalism)',
+            content: [
+              'Seneca pernah mengingatkan bahwa bukan orang yang memiliki sedikit yang miskin, melainkan orang yang selalu menginginkan lebih. Budaya digital dirancang untuk membuat kita merasa selalu tertinggal—selalu ada gawai baru, tren baru, atau pencapaian orang lain yang tampak lebih berkilau.',
+              'Ketenangan hadir saat kita berani mendefinisikan arti "cukup" bagi diri kita sendiri. Matikan notifikasi yang tidak mendesak, sisihkan waktu satu jam setiap malam untuk membaca buku secara mendalam tanpa gangguan, dan rasakan kembali nikmatnya hadir utuh di saat ini.'
+            ]
+          }
+        ]
+      },
+      {
+        id: 'book-senja-bandung',
+        title: 'Senja di Braga: Sebuah Novel Tentang Pulang',
+        author: 'Larasati Ningrum',
+        category: 'Fiksi/Novel',
+        rating: 4.8,
+        reviewsCount: 1840,
+        price: 65000,
+        isFree: false,
+        coverGradient: 'from-rose-500 via-orange-600 to-amber-900',
+        coverAccent: '#FDE68A',
+        coverIcon: 'fa-mug-saucer',
+        badge: 'Best Seller Fiksi',
+        synopsis: 'Kisah pertemuan kembali dua sahabat lama di sebuah kedai kopi tua di sudut Jalan Braga saat hujan bulan Oktober turun.',
+        pages: [
+          {
+            chapterNumber: 1,
+            chapterTitle: 'Bab 1: Aroma Kopi dan Hujan Oktober',
+            content: [
+              'Hujan selalu punya cara tersendiri untuk memperlambat waktu di Jalan Braga. Dari balik jendela kaca kedai kopi yang telah berdiri sejak tahun lima puluhan itu, lampu-lampu jalanan mulai memantulkan cahaya keemasan di atas batu-batu andesit yang basah.',
+              'Kala menyesap kopi hitamnya perlahan. Sudah tujuh tahun sejak ia meninggalkan kota ini menuju Tokyo dengan segudang ambisi yang dulu terasa begitu mendesak. Kini, di mejanya tergeletak sepucuk surat bersampul biru pucat yang membawanya kembali ke kursi kayu yang sama.',
+              'Lonceng kuningan di atas pintu berdenting pelan. Seorang perempuan dengan payung transparan melangkah masuk, mengibaskan rintik air dari ujung syalnya. Saat mata mereka bertemu di antara kepulan uap hangat mesin espresso, tujuh tahun yang membentang di antara mereka seolah luruh dalam satu tarikan napas.'
+            ]
+          },
+          {
+            chapterNumber: 2,
+            chapterTitle: 'Bab 2: Lukisan yang Belum Selesai',
+            content: [
+              '"Kau masih memesan kopi tanpa gula," ucap الريا sambil tersenyum tipis, menarik kursi di hadapan Kala. Suaranya masih menyimpan kehangatan yang sama seperti sore terakhir mereka di studio seni kampus dulu.',
+              '"Dan kau masih membawa buku sketsa ke mana-mana," balas Kala, matanya tertuju pada buku bersampul kulit cokelat yang diletakkan Rara di tepi meja. Di sela-sela halamannya, tampak secarik pembatas buku dari daun gingko kering yang pernah Kala kirimkan dari musim gugur pertamanya di perantauan.',
+              'Mereka berbicara tentang banyak hal kecil sebelum akhirnya menyentuh alasan mengapa surat itu dikirimkan: galeri tua milik kakek Rara di ujung jalan akan segera dijual bulan depan, kecuali mereka berdua bisa menyelesaikan pameran terakhir yang pernah mereka janjikan.'
+            ]
+          },
+          {
+            chapterNumber: 3,
+            chapterTitle: 'Bab 3: Rumah Adalah Tempat Cerita Dimengerti',
+            content: [
+              'Malam semakin larut ketika hujan reda menyisakan udara dingin khas dataran tinggi Priangan. Mereka berjalan berdampingan menyusuri trotoar Braga yang mulai lengang, melewati etalase lukisan dan bangunan art deco yang berdiri anggun sebagai saksi bisu.',
+              'Kala menyadari satu hal malam itu: sejauh apa pun seseorang melangkah mengejar cakrawala, selalu ada satu sudut kota dan satu percakapan jujur yang memanggilnya pulang.'
+            ]
+          }
+        ]
+      },
+      {
+        id: 'book-cyber-ronin',
+        title: 'Neo-Nusantara 2099: Chronicles of Cyber Ronin',
+        author: 'Takeshi & Damar Studio',
+        category: 'Komik/Manga',
+        rating: 4.9,
+        reviewsCount: 1590,
+        price: 49000,
+        isFree: false,
+        coverGradient: 'from-fuchsia-600 via-purple-700 to-slate-950',
+        coverAccent: '#22D3EE',
+        coverIcon: 'fa-bolt-lightning',
+        badge: 'Light Novel & Manga',
+        synopsis: 'Aksi mendebarkan pendekar pedang plasma di megapolitan Neo-Jakarta tahun 2099 yang menjaga kode rahasia leluhur.',
+        pages: [
+          {
+            chapterNumber: 1,
+            chapterTitle: 'Episode 1: Bayangan di Atas Menara Kemayoran',
+            content: [
+              '[SFX: ZZZZZT—CLANG!] Percikan bunga api biru neon berhamburan di tengah derasnya hujan asam Sektor 7 Neo-Nusantara. Di atas atap kaca gedung pencakar langit setinggi empat ratus lantai, Arka menyarungkan kembali bilah keris plasmanya yang berpendar ungu.',
+              '"Sinyal enkripsi itu berasal dari pelabuhan udara lama," bisik Lyra melalui implan komunikasi di telinga Arka. Hologram peta tiga dimensi berpendar di balik visor helm taktisnya, menampilkan tiga drone pemburu milik Sindikat Valerius yang sedang mendekat dengan kecepatan supersonik.',
+              'Arka menatap cakrawala kota yang dipenuhi papan iklan holografik raksasa. Di balik gemerlap teknologi sibernetika tahun 2099 ini, tersimpan satu gulungan memori kuno yang tidak boleh jatuh ke tangan korporasi mana pun.'
+            ]
+          },
+          {
+            chapterNumber: 2,
+            chapterTitle: 'Episode 2: Kode Keris Pusaka',
+            content: [
+              'Dengan satu lompatan gravitasi nol, Arka meluncur menembus celah kereta magnetik yang melesat di udara. Angin malam menderu kencang saat jubah serat karbonnya berkibar menahan tekanan udara.',
+              '"Lyra, buka jalur frekuensi lama di bawah terowongan Kota Tua!" seru Arka. Di sanalah markas bawah tanah para penjaga arsip bersembunyi—tempat di mana teknologi kuantum berpadu dengan filosofi bela diri nusantara.'
+            ]
+          },
+          {
+            chapterNumber: 3,
+            chapterTitle: 'Episode 3: Kebangkitan Sang Penjaga',
+            content: [
+              'Ketika pintu baja kuno itu terbuka, cahaya hangat lampu minyak menyapa Arka—kontras dengan dunia neon dingin di atas sana. Sang Tetua telah menunggu di depan terminal utama, siap mengungkap rahasia di balik Proyek Garuda.'
+            ]
+          }
+        ]
+      },
+      {
+        id: 'book-startup-lean',
+        title: 'Zero to Scale: Playbook Founder Bootstrap Indonesia',
+        author: 'Kevin Halim',
+        category: 'Bisnis & Teknologi',
+        rating: 4.7,
+        reviewsCount: 980,
+        price: 79000,
+        isFree: false,
+        coverGradient: 'from-blue-600 via-cyan-700 to-slate-900',
+        coverAccent: '#38BDF8',
+        coverIcon: 'fa-rocket',
+        badge: 'Wajib Baca Founder',
+        synopsis: 'Strategi nyata membangun bisnis SaaS dan produk digital yang profitabel sejak hari pertama tanpa bakar uang investor.',
+        pages: [
+          {
+            chapterNumber: 1,
+            chapterTitle: 'Bab 1: Mitos Bakar Uang vs Keberlanjutan Arus Kas',
+            content: [
+              'Selama satu dekade terakhir, ekosistem startup sering kali mengukur kesuksesan dari besarnya pendanaan modal ventura yang diumumkan di media, bukan dari seberapa sehat nilai yang diberikan kepada pelanggan yang membayar. Namun musim telah berganti: era efisiensi dan profitabilitas nyata telah tiba.',
+              'Membangun bisnis dengan pendekatan bootstrap bukan berarti berpikir kecil. Justru sebaliknya, keterbatasan modal memaksa seorang founder untuk fokus seratus persen pada masalah pelanggan yang paling menyakitkan sejak minggu pertama.'
+            ]
+          },
+          {
+            chapterNumber: 2,
+            chapterTitle: 'Bab 2: Validasi Pasar dalam 14 Hari',
+            content: [
+              'Jangan pernah menulis sepuluh ribu baris kode sebelum Anda berbicara dengan dua puluh calon pelanggan potensial. Buatlah prototipe antarmuka yang bersih, tunjukkan bagaimana produk Anda menghemat waktu atau uang mereka, dan mintalah komitmen nyata.',
+              'Umpan balik paling jujur bukanlah pujian "ide kamu bagus", melainkan kesediaan pelanggan mengeluarkan dompet untuk berlangganan bulan pertama.'
+            ]
+          }
+        ]
+      },
+      {
+        id: 'book-atomic-focus',
+        title: 'Deep Work Nusantara: Seni Fokus Tanpa Distraksi',
+        author: 'Sinta Maharani, M.Psi.',
+        category: 'Pengembangan Diri',
+        rating: 4.8,
+        reviewsCount: 1420,
+        price: 59000,
+        isFree: false,
+        coverGradient: 'from-amber-500 via-orange-600 to-stone-900',
+        coverAccent: '#FDE047',
+        coverIcon: 'fa-brain',
+        badge: 'Pilihan Pembaca',
+        synopsis: 'Metode ilmiah melatih otot konsentrasi tinggi untuk menyelesaikan pekerjaan bernilai besar dalam waktu singkat.',
+        pages: [
+          {
+            chapterNumber: 1,
+            chapterTitle: 'Bab 1: Mengapa Fokus Adalah Mata Uang Baru',
+            content: [
+              'Kemampuan untuk melakukan fokus mendalam (deep work) semakin langka pada saat yang bersamaan ketika nilainya di pasar kerja semakin melambung tinggi. Barang siapa yang mampu menguasai seni berkonsentrasi penuh selama sembilan puluh menit tanpa terdistraksi, ia akan menghasilkan karya yang melampaui rata-rata.',
+              'Otak manusia tidak dirancang untuk berpindah konteks setiap tiga menit. Setiap kali Anda melirik pesan instan di tengah menyusun laporan strategis, ada "residu perhatian" yang tertinggal dan menurunkan kapasitas kognitif Anda hingga empat puluh persen.'
+            ]
+          },
+          {
+            chapterNumber: 2,
+            chapterTitle: 'Bab 2: Merancang Ritual Pagi Emas',
+            content: [
+              'Dua jam pertama setelah Anda memulai hari kerja adalah waktu emas neurologis Anda. Lindungi blok waktu tersebut seperti Anda melindungi aset paling berharga. Jauhkan ponsel di ruangan berbeda, siapkan segelas air hangat atau kopi, dan selesaikan satu tugas terpenting hari itu sebelum membuka kotak masuk surel.'
+            ]
+          }
+        ]
+      },
+      {
+        id: 'book-laut-bintang',
+        title: 'Pelayaran Menuju Bintang Selatan',
+        author: 'Bagaskara Putra',
+        category: 'Fiksi/Novel',
+        rating: 4.7,
+        reviewsCount: 860,
+        price: 0,
+        isFree: true,
+        coverGradient: 'from-sky-600 via-blue-800 to-indigo-950',
+        coverAccent: '#7DD3FC',
+        coverIcon: 'fa-compass',
+        badge: 'Gratis / Edisi Spesial',
+        synopsis: 'Petualangan epik kapten kapal pinisi muda melintasi kepulauan rempah timur dengan peta astronomi warisan leluhur.',
+        pages: [
+          {
+            chapterNumber: 1,
+            chapterTitle: 'Bab 1: Peta Bintang dari Banda Neira',
+            content: [
+              'Angin muson timur mulai mengisi layar agung kapal pinisi Phinisi Nusantara saat fajar menyingsing di ufuk Laut Banda. Damar berdiri di anjungan kayu jati, merentangkan gulungan perkamen tua yang menampilkan rasi bintang Pari di langit selatan.',
+              '"Para pelaut terdahulu tidak pernah tersesat di samudra luas karena mereka membaca bahasa gelombang dan cahaya bintang," ujar Mpu Nala, navigator tua yang telah mengarungi lautan nusantara selama setengah abad.'
+            ]
+          },
+          {
+            chapterNumber: 2,
+            chapterTitle: 'Bab 2: Nyanyian Arus Selat',
+            content: [
+              'Di bawah permukaan air yang sebening kristal, terumbu karang berkilauan bak taman zamrud. Namun di kejauhan, awan kumulonimbus mulai menggumpal menandakan ujian pertama bagi awak kapal muda tersebut.'
+            ]
+          }
+        ]
+      },
+      {
+        id: 'book-uiux-mastery',
+        title: 'Desain Antarmuka Modern: Psikologi & Sistem Desain',
+        author: 'Nadia Kusuma, Senior Designer',
+        category: 'Bisnis & Teknologi',
+        rating: 4.9,
+        reviewsCount: 1150,
+        price: 75000,
+        isFree: false,
+        coverGradient: 'from-violet-600 via-purple-700 to-indigo-950',
+        coverAccent: '#C4B5FD',
+        coverIcon: 'fa-pen-ruler',
+        badge: 'UI/UX Favorit',
+        synopsis: 'Rahasia merancang aplikasi web dan mobile yang elegan, aksesibel, dan memberikan pengalaman membaca kelas dunia.',
+        pages: [
+          {
+            chapterNumber: 1,
+            chapterTitle: 'Bab 1: Tipografi Adalah 90% dari Desain Web',
+            content: [
+              'Ketika pengguna membuka sebuah aplikasi e-book atau portal berita, tujuan utama mereka adalah menyerap informasi dengan nyaman. Oleh karena itu, pemilihan jenis huruf, kontras warna antara teks dan latar belakang (`#1E293B` di atas `#F8FAFC`), serta jarak antarbaris (line-height) memegang peranan krusial.',
+              'Lebar kolom bacaan yang ideal berkisar antara 60 hingga 75 karakter per baris. Jika baris terlalu panjang, mata pembaca akan cepat lelah saat harus berpindah dari ujung kanan kembali ke ujung kiri baris berikutnya.'
+            ]
+          },
+          {
+            chapterNumber: 2,
+            chapterTitle: 'Bab 2: Ergonomi Layar Sentuh (Thumb-Friendly Zone)',
+            content: [
+              'Di perangkat smartphone, lebih dari 75% interaksi pengguna dilakukan menggunakan satu ibu jari. Menempatkan navigasi utama di bagian bawah layar (Bottom Navigation Bar) dan memastikan setiap tombol interaktif memiliki area sentuh yang memadai adalah kunci menciptakan antarmuka yang terasa alami dan responsif.'
+            ]
+          }
+        ]
+      }
+    ];
+
+    // --------------------------------------------------------------------------
+    // 2. STATE MANAGEMENT & LOCALSTORAGE PERSISTENCE (SAFE TRY/CATCH)
+    // --------------------------------------------------------------------------
+    const STORAGE_KEY = 'bookverse_app_state_v1';
+
+    const defaultState = {
+      currentView: 'explore', // 'explore' | 'library' | 'reader'
+      selectedCategory: 'Semua',
+      searchQuery: '',
+      sortBy: 'popular',
+      libraryFilter: 'all', // 'all' | 'reading' | 'bookmarked' | 'custom'
+      // Daftar ID buku yang dimiliki di Perpustakaan Saya (default memiliki 2 buku agar user langsung bisa melihat progres)
+      ownedBookIds: ['book-filosofi-teras', 'book-laut-bintang'],
+      // Buku tambahan yang diupload sendiri oleh pengguna
+      customBooks: [],
+      // Progres halaman per buku: { [bookId]: { currentPageIndex: 0, maxPageReached: 0, lastReadAt: timestamp } }
+      readingProgress: {
+        'book-filosofi-teras': { currentPageIndex: 1, maxPageReached: 1, lastReadAt: 1729400000000 },
+        'book-laut-bintang': { currentPageIndex: 0, maxPageReached: 0, lastReadAt: 1729300000000 }
+      },
+      // Daftar halaman yang di-bookmark per buku: { [bookId]: [pageIndex1, pageIndex2] }
+      bookmarks: {
+        'book-filosofi-teras': [1]
+      },
+      // Konfigurasi E-Book Reader
+      readerSettings: {
+        activeBookId: 'book-filosofi-teras',
+        theme: 'light',       // 'light' | 'sepia' | 'dark'
+        fontSize: 18,         // 14px s/d 26px
+        fontFamily: 'serif',  // 'serif' | 'sans'
+        widthMode: 'medium'   // 'narrow' | 'medium' | 'wide'
+      }
+    };
+
+    let appState = loadAppState();
+    let lastPurchasedBookId = null;
+
+    function loadAppState() {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (!raw) return JSON.parse(JSON.stringify(defaultState));
+        const parsed = JSON.parse(raw);
+        return {
+          ...JSON.parse(JSON.stringify(defaultState)),
+          ...parsed,
+          readerSettings: {
+            ...defaultState.readerSettings,
+            ...(parsed.readerSettings || {})
+          }
+        };
+      } catch (err) {
+        return JSON.parse(JSON.stringify(defaultState));
+      }
+    }
+
+    function saveAppState() {
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(appState));
+      } catch (err) {
+        // Abaikan jika berada di mode private/sandbox ketat
+      }
+    }
+
+    function getAllBooks() {
+      return [...appState.customBooks, ...DEFAULT_BOOKS];
+    }
+
+    function getBookById(bookId) {
+      return getAllBooks().find(b => b.id === bookId) || DEFAULT_BOOKS[0];
+    }
+
+    function isBookOwned(bookId) {
+      return appState.ownedBookIds.includes(bookId);
+    }
+
+    function getBookProgress(bookId) {
+      const book = getBookById(bookId);
+      const totalPages = book && book.pages ? book.pages.length : 1;
+      const prog = appState.readingProgress[bookId] || { currentPageIndex: 0, maxPageReached: 0 };
+      const currentPageIndex = Math.min(Math.max(0, prog.currentPageIndex || 0), totalPages - 1);
+      const maxPage = Math.min(Math.max(currentPageIndex, prog.maxPageReached || 0), totalPages - 1);
+      const percent = Math.round(((currentPageIndex + 1) / totalPages) * 100);
+      return {
+        currentPageIndex,
+        maxPageReached: maxPage,
+        totalPages,
+        percent
+      };
+    }
+
+    function getBookBookmarks(bookId) {
+      return appState.bookmarks[bookId] || [];
+    }
+
+    function formatRupiah(num) {
+      if (!num || num === 0) return 'Gratis / Sampel';
+      return 'Rp ' + num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+    }
+
+    // --------------------------------------------------------------------------
+    // 3. SISTEM NOTIFIKASI TOAST IN-PAGE (PENGGANTI ALERT)
+    // --------------------------------------------------------------------------
+    function showToast(message, type = 'info') {
+      const container = document.getElementById('toast-container');
+      if (!container) return;
+
+      const iconMap = {
+        success: 'fa-circle-check text-emerald-400',
+        info: 'fa-circle-info text-brand-400',
+        bookmark: 'fa-bookmark text-amber-400'
+      };
+
+      const toast = document.createElement('div');
+      toast.className = 'pointer-events-auto flex items-center gap-3 px-4 py-3 rounded-2xl bg-slate-900 text-white text-xs sm:text-sm font-semibold shadow-xl border border-slate-700/80 transition-all duration-300';
+      toast.innerHTML = `
+        <i class="fa-solid ${iconMap[type] || iconMap.info} text-base"></i>
+        <span>${escapeHtml(message)}</span>
+      `;
+
+      container.appendChild(toast);
+      setTimeout(() => {
+        toast.style.opacity = '0';
+        toast.style.transform = 'translateY(8px)';
+        setTimeout(() => toast.remove(), 250);
+      }, 2800);
+    }
+
+    function escapeHtml(str) {
+      return String(str || '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+    }
+
+    // --------------------------------------------------------------------------
+    // 4. NAVIGASI SPA (EXPLORE, LIBRARY, READER)
+    // --------------------------------------------------------------------------
+    function switchView(targetView) {
+      appState.currentView = targetView;
+      saveAppState();
+
+      const views = {
+        explore: document.getElementById('view-explore'),
+        library: document.getElementById('view-library'),
+        reader: document.getElementById('view-reader')
+      };
+
+      Object.keys(views).forEach(key => {
+        if (views[key]) {
+          views[key].classList.toggle('hidden', key !== targetView);
+        }
+      });
+
+      // Update status tombol navigasi di Sidebar Desktop & Bottom Nav Mobile
+      document.querySelectorAll('.nav-btn').forEach(btn => {
+        const navTarget = btn.getAttribute('data-nav-target');
+        const isActive = navTarget === targetView;
+        if (btn.closest('aside')) {
+          btn.className = `nav-btn w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm font-semibold transition-all ${
+            isActive
+              ? 'bg-brand-500 text-white shadow-md shadow-brand-500/25'
+              : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'
+          }`;
+        } else {
+          btn.className = `nav-btn relative flex-1 py-1.5 rounded-xl flex flex-col items-center justify-center gap-1 text-[11px] font-bold transition-colors ${
+            isActive ? 'text-brand-600 bg-brand-50/80' : 'text-slate-500 hover:text-slate-800'
+          }`;
+        }
+      });
+
+      if (targetView === 'explore') {
+        renderExploreView();
+      } else if (targetView === 'library') {
+        renderLibraryView();
+      } else if (targetView === 'reader') {
+        renderReaderView();
+      }
+
+      updateSidebarWidgets();
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    // --------------------------------------------------------------------------
+    // 5. RENDER SIDEBAR & HEADER BADGES
+    // --------------------------------------------------------------------------
+    function updateSidebarWidgets() {
+      const allBooksCount = getAllBooks().length;
+      const ownedCount = appState.ownedBookIds.length;
+
+      const storeCountEl = document.getElementById('sidebar-store-count');
+      const libCountEl = document.getElementById('sidebar-library-count');
+      const mobileBadgeEl = document.getElementById('mobile-library-badge');
+
+      if (storeCountEl) storeCountEl.textContent = allBooksCount;
+      if (libCountEl) libCountEl.textContent = ownedCount;
+      if (mobileBadgeEl) mobileBadgeEl.textContent = ownedCount;
+
+      // Update widget "Sedang Dibaca" di sidebar
+      const activeBook = getBookById(appState.readerSettings.activeBookId);
+      if (activeBook) {
+        const prog = getBookProgress(activeBook.id);
+        const titleEl = document.getElementById('sidebar-active-book-title');
+        const authorEl = document.getElementById('sidebar-active-book-author');
+        const pctTextEl = document.getElementById('sidebar-active-progress-text');
+        const pctBarEl = document.getElementById('sidebar-active-progress-bar');
+
+        if (titleEl) titleEl.textContent = activeBook.title;
+        if (authorEl) authorEl.textContent = activeBook.author;
+        if (pctTextEl) pctTextEl.textContent = `${prog.percent}%`;
+        if (pctBarEl) pctBarEl.style.width = `${prog.percent}%`;
+      }
+
+      // Update tombol Featured Banner jika sudah dimiliki
+      const featuredBuyLabel = document.getElementById('featured-buy-label');
+      if (featuredBuyLabel) {
+        if (isBookOwned('book-ai-future')) {
+          featuredBuyLabel.textContent = 'Sudah di Perpustakaan • Buka';
+        } else {
+          featuredBuyLabel.textContent = 'Beli • Rp 89.000';
+        }
+      }
+    }
+
+    // --------------------------------------------------------------------------
+    // 6. RENDER HALAMAN 1: TOKO / EXPLORE (MARKETPLACE)
+    // --------------------------------------------------------------------------
+    function renderExploreView() {
+      // Update tampilan tombol kategori aktif
+      document.querySelectorAll('.cat-pill').forEach(btn => {
+        const cat = btn.getAttribute('data-category');
+        const active = cat === appState.selectedCategory;
+        btn.className = `cat-pill shrink-0 px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold transition-all ${
+          active
+            ? 'bg-brand-500 text-white shadow-md shadow-brand-500/25'
+            : 'bg-white text-slate-600 hover:bg-slate-100 border border-slate-200/80'
+        }`;
+      });
+
+      const query = (appState.searchQuery || '').trim().toLowerCase();
+      let books = getAllBooks().filter(book => {
+        const matchCat = appState.selectedCategory === 'Semua' || book.category === appState.selectedCategory;
+        const matchQuery = !query ||
+          book.title.toLowerCase().includes(query) ||
+          book.author.toLowerCase().includes(query) ||
+          book.category.toLowerCase().includes(query) ||
+          (book.synopsis && book.synopsis.toLowerCase().includes(query));
+        return matchCat && matchQuery;
+      });
+
+      // Urutkan buku sesuai dropdown
+      if (appState.sortBy === 'rating') {
+        books.sort((a, b) => b.rating - a.rating);
+      } else if (appState.sortBy === 'price-asc') {
+        books.sort((a, b) => a.price - b.price);
+      } else if (appState.sortBy === 'price-desc') {
+        books.sort((a, b) => b.price - a.price);
+      } else {
+        books.sort((a, b) => (b.reviewsCount || 0) - (a.reviewsCount || 0));
+      }
+
+      const badgeEl = document.getElementById('catalog-result-badge');
+      if (badgeEl) badgeEl.textContent = `${books.length} Buku`;
+
+      const gridEl = document.getElementById('store-books-grid');
+      const emptyEl = document.getElementById('store-empty-state');
+
+      if (!books.length) {
+        gridEl.innerHTML = '';
+        emptyEl.classList.remove('hidden');
+        return;
+      }
+
+      emptyEl.classList.add('hidden');
+      gridEl.innerHTML = books.map(book => {
+        const owned = isBookOwned(book.id);
+        const prog = getBookProgress(book.id);
+        const priceLabel = book.isFree || book.price === 0 ? 'Gratis / Sampel' : formatRupiah(book.price);
+
+        return `
+          <article class="book-card bg-white rounded-2xl border border-slate-200/80 p-4 flex flex-col justify-between shadow-sm hover:shadow-md transition-all">
+            <div>
+              <!-- Sampul Buku & Badge -->
+              <div class="relative mb-4">
+                <div
+                  data-action="preview-book"
+                  data-book-id="${escapeHtml(book.id)}"
+                  class="book-cover-3d cursor-pointer aspect-[3/4] rounded-xl overflow-hidden bg-gradient-to-br ${book.coverGradient || 'from-brand-600 to-slate-900'} p-4 flex flex-col justify-between text-white shadow-md relative"
+                >
+                  <div class="book-spine-overlay absolute inset-0 pointer-events-none"></div>
+                  <div class="flex items-center justify-between text-[10px] font-bold uppercase tracking-wider opacity-90">
+                    <span class="truncate pr-2">${escapeHtml(book.category)}</span>
+                    <i class="fa-solid ${book.coverIcon || 'fa-book'} text-xs"></i>
+                  </div>
+
+                  <div class="my-auto py-2">
+                    <div class="w-8 h-1 rounded-full mb-2.5" style="background-color: ${book.coverAccent || '#FBBF24'}"></div>
+                    <h3 class="font-extrabold text-base leading-snug line-clamp-3">${escapeHtml(book.title)}</h3>
+                  </div>
+
+                  <div class="pt-2 border-t border-white/15 flex items-center justify-between text-[11px] opacity-90">
+                    <span class="truncate">${escapeHtml(book.author)}</span>
+                    <span>${book.pages.length} Hal</span>
+                  </div>
+                </div>
+
+                <!-- Badge Pojok Kanan Atas -->
+                ${book.badge ? `
+                  <span class="absolute top-2.5 right-2.5 px-2.5 py-0.5 rounded-full text-[10px] font-extrabold bg-slate-900/85 text-white backdrop-blur-sm border border-white/15">
+                    ${escapeHtml(book.badge)}
+                  </span>
+                ` : ''}
+
+                ${owned ? `
+                  <span class="absolute bottom-2.5 left-2.5 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500 text-white shadow">
+                    <i class="fa-solid fa-check mr-1"></i>Dimiliki (${prog.percent}%)
+                  </span>
+                ` : ''}
+              </div>
+
+              <!-- Detail Judul, Penulis & Rating -->
+              <div class="space-y-1.5">
+                <div class="flex items-center justify-between text-xs">
+                  <span class="text-amber-500 font-bold flex items-center gap-1">
+                    <i class="fa-solid fa-star"></i> ${book.rating.toFixed(1)}
+                    <span class="text-slate-400 font-normal">(${book.reviewsCount})</span>
+                  </span>
+                  <span class="font-extrabold ${book.isFree || book.price === 0 ? 'text-emerald-600' : 'text-slate-900'}">
+                    ${priceLabel}
+                  </span>
+                </div>
+
+                <h3 class="font-bold text-slate-900 text-sm sm:text-base line-clamp-1" title="${escapeHtml(book.title)}">
+                  ${escapeHtml(book.title)}
+                </h3>
+                <p class="text-xs text-slate-500 font-medium">${escapeHtml(book.author)}</p>
+                <p class="text-xs text-slate-500 line-clamp-2 pt-0.5 leading-relaxed">
+                  ${escapeHtml(book.synopsis || '')}
+                </p>
+              </div>
+            </div>
+
+            <!-- Tombol Aksi (Beli / Tambah ke Perpustakaan & Pratinjau) -->
+            <div class="pt-4 mt-4 border-t border-slate-100 space-y-2">
+              ${owned ? `
+                <button
+                  type="button"
+                  data-action="read-book"
+                  data-book-id="${escapeHtml(book.id)}"
+                  class="w-full py-2.5 px-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition-all flex items-center justify-center gap-1.5 shadow-sm"
+                >
+                  <i class="fa-solid fa-book-open"></i>
+                  <span>Lanjutkan Membaca (${prog.percent}%)</span>
+                </button>
+              ` : `
+                <button
+                  type="button"
+                  data-action="buy-book"
+                  data-book-id="${escapeHtml(book.id)}"
+                  class="w-full py-2.5 px-3 rounded-xl bg-brand-500 hover:bg-brand-600 text-white text-xs font-bold transition-all flex items-center justify-center gap-1.5 shadow-sm shadow-brand-500/20"
+                >
+                  <i class="fa-solid ${book.isFree ? 'fa-plus' : 'fa-cart-shopping'}"></i>
+                  <span>${book.isFree ? 'Tambah ke Perpustakaan' : 'Beli / Tambah Koleksi'}</span>
+                </button>
+              `}
+
+              <button
+                type="button"
+                data-action="preview-book"
+                data-book-id="${escapeHtml(book.id)}"
+                class="w-full py-2 px-3 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold transition-all flex items-center justify-center gap-1.5"
+              >
+                <i class="fa-regular fa-eye"></i>
+                <span>Pratinjau / Sampel Bab 1</span>
+              </button>
+            </div>
+          </article>
+        `;
+      }).join('');
+    }
+
+    // --------------------------------------------------------------------------
+    // 7. RENDER HALAMAN 2: PERPUSTAKAAN SAYA (MY LIBRARY)
+    // --------------------------------------------------------------------------
+    function renderLibraryView() {
+      const ownedBooks = getAllBooks().filter(b => isBookOwned(b.id));
+
+      // Hitung metrik perpustakaan
+      let inProgressCount = 0;
+      let completedCount = 0;
+      let totalBookmarksCount = 0;
+
+      ownedBooks.forEach(book => {
+        const prog = getBookProgress(book.id);
+        if (prog.percent >= 100) {
+          completedCount++;
+        } else if (prog.currentPageIndex > 0 || prog.percent > 0) {
+          inProgressCount++;
+        }
+      });
+
+      Object.keys(appState.bookmarks).forEach(bookId => {
+        totalBookmarksCount += (appState.bookmarks[bookId] || []).length;
+      });
+
+      document.getElementById('stat-total-owned').textContent = `${ownedBooks.length} Buku`;
+      document.getElementById('stat-in-progress').textContent = `${inProgressCount} Buku`;
+      document.getElementById('stat-completed').textContent = `${completedCount} Buku`;
+      document.getElementById('stat-bookmarks').textContent = `${totalBookmarksCount} Halaman`;
+
+      // Update tampilan tab filter perpustakaan
+      document.querySelectorAll('.lib-tab-btn').forEach(btn => {
+        const filterVal = btn.getAttribute('data-lib-filter');
+        const active = filterVal === appState.libraryFilter;
+        btn.className = `lib-tab-btn px-3.5 py-2 rounded-xl text-xs font-bold transition-all ${
+          active
+            ? 'bg-slate-900 text-white shadow-sm'
+            : 'bg-white text-slate-600 hover:bg-slate-100 border border-slate-200/80'
+        }`;
+      });
+
+      // Filter daftar buku di perpustakaan (termasuk pencarian bar atas)
+      const query = (appState.searchQuery || '').trim().toLowerCase();
+      const filteredBooks = ownedBooks.filter(book => {
+        const prog = getBookProgress(book.id);
+        const bms = getBookBookmarks(book.id);
+
+        if (appState.libraryFilter === 'reading' && prog.percent >= 100) return false;
+        if (appState.libraryFilter === 'bookmarked' && bms.length === 0) return false;
+        if (appState.libraryFilter === 'custom' && !book.isCustom) return false;
+
+        if (query) {
+          return (
+            book.title.toLowerCase().includes(query) ||
+            book.author.toLowerCase().includes(query) ||
+            book.category.toLowerCase().includes(query)
+          );
+        }
+        return true;
+      });
+
+      const gridEl = document.getElementById('library-books-grid');
+      const emptyEl = document.getElementById('library-empty-state');
+
+      if (!filteredBooks.length) {
+        gridEl.innerHTML = '';
+        emptyEl.classList.remove('hidden');
+        return;
+      }
+
+      emptyEl.classList.add('hidden');
+      gridEl.innerHTML = filteredBooks.map(book => {
+        const prog = getBookProgress(book.id);
+        const bms = getBookBookmarks(book.id);
+
+        return `
+          <article class="bg-white rounded-2xl border border-slate-200/80 p-5 flex flex-col justify-between shadow-sm hover:shadow-md transition-all">
+            <div class="flex gap-4">
+              <!-- Mini Cover -->
+              <div
+                data-action="read-book"
+                data-book-id="${escapeHtml(book.id)}"
+                class="cursor-pointer w-24 h-32 rounded-xl bg-gradient-to-br ${book.coverGradient || 'from-brand-600 to-slate-900'} p-3 flex flex-col justify-between text-white shrink-0 shadow-md relative overflow-hidden"
+              >
+                <div class="book-spine-overlay absolute inset-0 pointer-events-none"></div>
+                <i class="fa-solid ${book.coverIcon || 'fa-book'} text-xs opacity-80"></i>
+                <p class="font-bold text-xs leading-tight line-clamp-3">${escapeHtml(book.title)}</p>
+                <span class="text-[9px] opacity-75">${prog.totalPages} Hal</span>
+              </div>
+
+              <!-- Info & Progres Membaca -->
+              <div class="flex-1 min-w-0">
+                <div class="flex items-center justify-between gap-2">
+                  <span class="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md bg-brand-50 text-brand-600">
+                    ${escapeHtml(book.category)}
+                  </span>
+                  ${bms.length > 0 ? `
+                    <span class="text-[11px] font-bold text-amber-600 flex items-center gap-1" title="Memiliki halaman yang ditandai">
+                      <i class="fa-solid fa-bookmark"></i> ${bms.length}
+                    </span>
+                  ` : ''}
+                </div>
+
+                <h3 class="font-bold text-slate-900 text-base mt-1.5 line-clamp-1" title="${escapeHtml(book.title)}">
+                  ${escapeHtml(book.title)}
+                </h3>
+                <p class="text-xs text-slate-500 mb-3">${escapeHtml(book.author)}</p>
+
+                <!-- Indikator Progres Membaca -->
+                <div class="space-y-1.5 bg-slate-50 p-2.5 rounded-xl border border-slate-100">
+                  <div class="flex items-center justify-between text-xs">
+                    <span class="font-semibold text-slate-600">Progres: <strong class="text-brand-600">${prog.percent}% Dibaca</strong></span>
+                    <span class="text-[11px] text-slate-400">Hal ${prog.currentPageIndex + 1}/${prog.totalPages}</span>
+                  </div>
+                  <div class="w-full h-2 bg-slate-200 rounded-full overflow-hidden">
+                    <div
+                      class="h-full ${prog.percent >= 100 ? 'bg-emerald-500' : 'bg-brand-500'} rounded-full transition-all duration-300"
+                      style="width: ${prog.percent}%"
+                    ></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Tombol Lanjutkan Membaca & Opsi -->
+            <div class="pt-4 mt-4 border-t border-slate-100 flex items-center gap-2">
+              <button
+                type="button"
+                data-action="read-book"
+                data-book-id="${escapeHtml(book.id)}"
+                class="flex-1 py-2.5 px-4 rounded-xl bg-brand-500 hover:bg-brand-600 text-white text-xs font-bold transition-all flex items-center justify-center gap-2 shadow-sm shadow-brand-500/20"
+              >
+                <i class="fa-solid fa-book-open-reader"></i>
+                <span>Lanjutkan Membaca (Hal ${prog.currentPageIndex + 1})</span>
+              </button>
+
+              <button
+                type="button"
+                data-action="reset-book-progress"
+                data-book-id="${escapeHtml(book.id)}"
+                title="Ulangi baca dari Halaman 1"
+                class="w-9 h-9 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-600 flex items-center justify-center text-xs transition-colors"
+              >
+                <i class="fa-solid fa-rotate-left"></i>
+              </button>
+
+              <button
+                type="button"
+                data-action="remove-from-library"
+                data-book-id="${escapeHtml(book.id)}"
+                title="Hapus dari Perpustakaan Saya"
+                class="w-9 h-9 rounded-xl bg-slate-100 hover:bg-rose-100 text-slate-500 hover:text-rose-600 flex items-center justify-center text-xs transition-colors"
+              >
+                <i class="fa-regular fa-trash-can"></i>
+              </button>
+            </div>
+          </article>
+        `;
+      }).join('');
+    }
+
+    // --------------------------------------------------------------------------
+    // 8. RENDER HALAMAN 3: INTERACTIVE E-BOOK READER
+    // --------------------------------------------------------------------------
+    function openBookInReader(bookId, startFromBeginning = false) {
+      const book = getBookById(bookId);
+      if (!book) return;
+
+      appState.readerSettings.activeBookId = book.id;
+
+      if (!appState.readingProgress[book.id]) {
+        appState.readingProgress[book.id] = {
+          currentPageIndex: 0,
+          maxPageReached: 0,
+          lastReadAt: Date.now()
+        };
+      } else if (startFromBeginning) {
+        appState.readingProgress[book.id].currentPageIndex = 0;
+        appState.readingProgress[book.id].lastReadAt = Date.now();
+      } else {
+        appState.readingProgress[book.id].lastReadAt = Date.now();
+      }
+
+      saveAppState();
+      switchView('reader');
+    }
+
+    function renderReaderView() {
+      const book = getBookById(appState.readerSettings.activeBookId);
+      if (!book) return;
+
+      const prog = getBookProgress(book.id);
+      const pageObj = book.pages[prog.currentPageIndex] || book.pages[0];
+      const owned = isBookOwned(book.id);
+      const bookmarksList = getBookBookmarks(book.id);
+      const isBookmarked = bookmarksList.includes(prog.currentPageIndex);
+
+      // 1. Terapkan Tema Latar Belakang (Light / Sepia / Dark)
+      const wrapperEl = document.getElementById('reader-theme-wrapper');
+      wrapperEl.classList.remove('reader-theme-light', 'reader-theme-sepia', 'reader-theme-dark');
+      wrapperEl.classList.add(`reader-theme-${appState.readerSettings.theme}`);
+
+      document.querySelectorAll('.reader-theme-btn').forEach(btn => {
+        const t = btn.getAttribute('data-reader-theme');
+        if (t === appState.readerSettings.theme) {
+          btn.classList.add('ring-2', 'ring-brand-500', 'scale-105');
+        } else {
+          btn.classList.remove('ring-2', 'ring-brand-500', 'scale-105');
+        }
+      });
+
+      // 2. Terapkan Ukuran Font & Jenis Font (Serif / Sans-Serif)
+      const bodyEl = document.getElementById('reader-page-body');
+      const pageContainerEl = document.getElementById('reader-page-container');
+      const fontSizeLabel = document.getElementById('reader-font-size-label');
+
+      bodyEl.style.fontSize = `${appState.readerSettings.fontSize}px`;
+      fontSizeLabel.textContent = `${appState.readerSettings.fontSize}px`;
+
+      const isSerif = appState.readerSettings.fontFamily === 'serif';
+      pageContainerEl.classList.toggle('font-serif', isSerif);
+      pageContainerEl.classList.toggle('font-sans', !isSerif);
+
+      const btnSerif = document.getElementById('btn-font-serif');
+      const btnSans = document.getElementById('btn-font-sans');
+      btnSerif.className = `px-2.5 py-1 rounded-lg transition-all font-serif ${
+        isSerif ? 'bg-brand-500 text-white' : 'opacity-75 hover:opacity-100'
+      }`;
+      btnSans.className = `px-2.5 py-1 rounded-lg transition-all font-sans ${
+        !isSerif ? 'bg-brand-500 text-white' : 'opacity-75 hover:opacity-100'
+      }`;
+
+      // 3. Terapkan Lebar Bacaan (Desktop Width Mode)
+      const widthMap = {
+        narrow: { cls: 'max-w-xl', label: 'Fokus' },
+        medium: { cls: 'max-w-2xl', label: 'Sedang' },
+        wide: { cls: 'max-w-4xl', label: 'Lebar' }
+      };
+      const currentWidth = widthMap[appState.readerSettings.widthMode] || widthMap.medium;
+      pageContainerEl.classList.remove('max-w-xl', 'max-w-2xl', 'max-w-4xl');
+      pageContainerEl.classList.add(currentWidth.cls);
+      const widthLabelEl = document.getElementById('reader-width-label');
+      if (widthLabelEl) widthLabelEl.textContent = currentWidth.label;
+
+      // 4. Render Informasi Header & Isi Halaman
+      document.getElementById('reader-book-title').textContent = book.title;
+      document.getElementById('reader-book-chapter-subtitle').textContent = `${pageObj.chapterTitle} • Oleh ${book.author}`;
+
+      const previewBadge = document.getElementById('reader-preview-badge');
+      const sampleCta = document.getElementById('reader-sample-cta');
+      previewBadge.classList.toggle('hidden', owned);
+      sampleCta.classList.toggle('hidden', owned);
+
+      document.getElementById('reader-page-chapter-tag').textContent = `BAB ${pageObj.chapterNumber} • HALAMAN ${prog.currentPageIndex + 1}`;
+      document.getElementById('reader-page-heading').textContent = pageObj.chapterTitle;
+
+      bodyEl.innerHTML = (pageObj.content || [])
+        .map(p => `<p>${escapeHtml(p)}</p>`)
+        .join('');
+
+      // 5. Update Status Tombol Bookmark Halaman Ini
+      const bmBtn = document.getElementById('btn-reader-bookmark');
+      const bmIcon = document.getElementById('icon-reader-bookmark');
+      const bmLabel = document.getElementById('label-reader-bookmark');
+      const pageBmIndicator = document.getElementById('reader-page-bookmark-indicator');
+
+      if (isBookmarked) {
+        bmBtn.className = 'px-3 py-1.5 rounded-xl bg-amber-500 text-white border border-amber-500 text-xs font-bold transition-all flex items-center gap-1.5 shadow-sm';
+        bmIcon.className = 'fa-solid fa-bookmark';
+        bmLabel.textContent = 'Ditandai';
+        pageBmIndicator.classList.remove('hidden');
+        pageBmIndicator.classList.add('inline-flex');
+      } else {
+        bmBtn.className = 'px-3 py-1.5 rounded-xl border border-current/15 text-xs font-bold hover:bg-amber-500/15 transition-all flex items-center gap-1.5';
+        bmIcon.className = 'fa-regular fa-bookmark';
+        bmLabel.textContent = 'Tandai';
+        pageBmIndicator.classList.add('hidden');
+        pageBmIndicator.classList.remove('inline-flex');
+      }
+
+      // 6. Update Navigasi Halaman Sebelum / Sesudah & Progress Bar
+      const btnPrev = document.getElementById('btn-prev-page');
+      const btnNext = document.getElementById('btn-next-page');
+      btnPrev.disabled = prog.currentPageIndex <= 0;
+      btnNext.disabled = prog.currentPageIndex >= prog.totalPages - 1;
+
+      document.getElementById('reader-page-counter').textContent = `Halaman ${prog.currentPageIndex + 1} dari ${prog.totalPages}`;
+      document.getElementById('reader-progress-percent').textContent = `${prog.percent}% Dibaca`;
+      document.getElementById('reader-top-progress-bar').style.width = `${prog.percent}%`;
+
+      updateSidebarWidgets();
+    }
+
+    function changeReaderPage(delta) {
+      const book = getBookById(appState.readerSettings.activeBookId);
+      if (!book) return;
+
+      const prog = getBookProgress(book.id);
+      const nextIndex = prog.currentPageIndex + delta;
+      if (nextIndex < 0 || nextIndex >= prog.totalPages) return;
+
+      goToReaderPage(nextIndex);
+    }
+
+    function goToReaderPage(pageIndex) {
+      const book = getBookById(appState.readerSettings.activeBookId);
+      if (!book) return;
+
+      const clamped = Math.min(Math.max(0, pageIndex), book.pages.length - 1);
+      const prevMax = (appState.readingProgress[book.id] && appState.readingProgress[book.id].maxPageReached) || 0;
+
+      appState.readingProgress[book.id] = {
+        currentPageIndex: clamped,
+        maxPageReached: Math.max(prevMax, clamped),
+        lastReadAt: Date.now()
+      };
+
+      saveAppState();
+      renderReaderView();
+    }
+
+    function toggleCurrentPageBookmark() {
+      const bookId = appState.readerSettings.activeBookId;
+      const prog = getBookProgress(bookId);
+      if (!appState.bookmarks[bookId]) {
+        appState.bookmarks[bookId] = [];
+      }
+
+      const list = appState.bookmarks[bookId];
+      const idx = list.indexOf(prog.currentPageIndex);
+
+      if (idx > -1) {
+        list.splice(idx, 1);
+        showToast(`Penanda pada Halaman ${prog.currentPageIndex + 1} dihapus.`, 'info');
+      } else {
+        list.push(prog.currentPageIndex);
+        list.sort((a, b) => a - b);
+        showToast(`Halaman ${prog.currentPageIndex + 1} disimpan ke Bookmark!`, 'bookmark');
+      }
+
+      saveAppState();
+      renderReaderView();
+    }
+
+    // --------------------------------------------------------------------------
+    // 9. DAFTAR ISI (TABLE OF CONTENTS) & BOOKMARK DRAWER
+    // --------------------------------------------------------------------------
+    function openTocDrawer() {
+      const book = getBookById(appState.readerSettings.activeBookId);
+      if (!book) return;
+
+      const prog = getBookProgress(book.id);
+      const bms = getBookBookmarks(book.id);
+
+      document.getElementById('toc-book-title').textContent = `${book.title} — ${book.author}`;
+
+      // Render Daftar Isi per Halaman / Bab
+      const chaptersListEl = document.getElementById('toc-chapters-list');
+      chaptersListEl.innerHTML = book.pages.map((p, idx) => {
+        const isCurrent = idx === prog.currentPageIndex;
+        return `
+          <button
+            type="button"
+            data-toc-page="${idx}"
+            class="w-full text-left p-3 rounded-xl border transition-all flex items-center justify-between gap-3 ${
+              isCurrent
+                ? 'bg-brand-50 border-brand-300 text-brand-700 font-bold'
+                : 'bg-white hover:bg-slate-50 border-slate-200/80 text-slate-700'
+            }"
+          >
+            <div class="min-w-0">
+              <p class="text-[10px] font-bold uppercase tracking-wider ${isCurrent ? 'text-brand-600' : 'text-slate-400'}">
+                Bab ${p.chapterNumber}
+              </p>
+              <p class="text-xs sm:text-sm truncate">${escapeHtml(p.chapterTitle)}</p>
+            </div>
+            <span class="shrink-0 text-xs font-bold px-2.5 py-1 rounded-lg ${
+              isCurrent ? 'bg-brand-500 text-white' : 'bg-slate-100 text-slate-600'
+            }">
+              Hal ${idx + 1}
+            </span>
+          </button>
+        `;
+      }).join('');
+
+      // Render Daftar Bookmark
+      document.getElementById('toc-bookmarks-count').textContent = bms.length;
+      const bmListEl = document.getElementById('toc-bookmarks-list');
+
+      if (bms.length === 0) {
+        bmListEl.innerHTML = `
+          <div class="p-4 rounded-xl bg-slate-50 border border-slate-200/60 text-center text-xs text-slate-500">
+            Belum ada halaman yang ditandai pada buku ini. Klik tombol <strong>Tandai</strong> di toolbar atas saat membaca.
+          </div>
+        `;
+      } else {
+        bmListEl.innerHTML = bms.map(pageIdx => {
+          const p = book.pages[pageIdx] || book.pages[0];
+          return `
+            <button
+              type="button"
+              data-toc-page="${pageIdx}"
+              class="w-full text-left p-3 rounded-xl bg-amber-50/70 hover:bg-amber-100/70 border border-amber-200/80 flex items-center justify-between gap-3 transition-all"
+            >
+              <div class="flex items-center gap-2.5 min-w-0">
+                <i class="fa-solid fa-bookmark text-amber-500 text-sm"></i>
+                <div class="min-w-0">
+                  <p class="text-xs font-bold text-slate-800 truncate">${escapeHtml(p.chapterTitle)}</p>
+                  <p class="text-[11px] text-slate-500 truncate">${escapeHtml((p.content[0] || '').slice(0, 60))}...</p>
+                </div>
+              </div>
+              <span class="shrink-0 text-xs font-bold text-amber-700 bg-white px-2.5 py-1 rounded-lg border border-amber-200">
+                Hal ${pageIdx + 1}
+              </span>
+            </button>
+          `;
+        }).join('');
+      }
+
+      document.getElementById('modal-toc').classList.remove('hidden');
+    }
+
+    function closeTocDrawer() {
+      document.getElementById('modal-toc').classList.add('hidden');
+    }
+
+    // --------------------------------------------------------------------------
+    // 10. SIMULASI TRANSAKSI PEMBELIAN & TAMBAH E-BOOK SENDIRI
+    // --------------------------------------------------------------------------
+    function purchaseOrClaimBook(bookId) {
+      const book = getBookById(bookId);
+      if (!book) return;
+
+      if (!appState.ownedBookIds.includes(book.id)) {
+        appState.ownedBookIds.unshift(book.id);
+      }
+
+      if (!appState.readingProgress[book.id]) {
+        appState.readingProgress[book.id] = {
+          currentPageIndex: 0,
+          maxPageReached: 0,
+          lastReadAt: Date.now()
+        };
+      }
+
+      lastPurchasedBookId = book.id;
+      saveAppState();
+
+      // Update tampilan di belakang modal
+      if (appState.currentView === 'explore') renderExploreView();
+      if (appState.currentView === 'library') renderLibraryView();
+      if (appState.currentView === 'reader') renderReaderView();
+      updateSidebarWidgets();
+
+      // Tampilkan Modal Konfirmasi Transaksi Sukses
+      document.getElementById('purchase-modal-book-title').textContent = book.title;
+      document.getElementById('purchase-modal-book-author').textContent = book.author;
+      document.getElementById('purchase-modal-book-price').textContent =
+        book.isFree || book.price === 0
+          ? 'Klaim Gratis Berhasil • Tersimpan di Perpustakaan'
+          : `Pembelian ${formatRupiah(book.price)} Berhasil • Lunas`;
+
+      const coverEl = document.getElementById('purchase-modal-cover');
+      coverEl.className = `w-12 h-16 rounded-lg shrink-0 bg-gradient-to-br ${book.coverGradient || 'from-brand-600 to-slate-900'} flex items-center justify-center text-white shadow`;
+      coverEl.innerHTML = `<i class="fa-solid ${book.coverIcon || 'fa-book'}"></i>`;
+
+      document.getElementById('modal-purchase-success').classList.remove('hidden');
+    }
+
+    function closePurchaseModal() {
+      document.getElementById('modal-purchase-success').classList.add('hidden');
+    }
+
+    function handleUploadCustomEbook(e) {
+      e.preventDefault();
+      const titleInput = document.getElementById('input-ebook-title');
+      const authorInput = document.getElementById('input-ebook-author');
+      const categoryInput = document.getElementById('input-ebook-category');
+      const chapterTitleInput = document.getElementById('input-ebook-chapter-title');
+      const contentInput = document.getElementById('input-ebook-content');
+
+      const title = titleInput.value.trim();
+      const author = authorInput.value.trim();
+      const category = categoryInput.value;
+      const firstChapter = chapterTitleInput.value.trim() || 'Bab 1: Naskah Pembuka';
+      const rawContent = contentInput.value.trim();
+
+      if (!title || !author || !rawContent) {
+        showToast('Mohon lengkapi Judul, Penulis, dan Isi Teks Bab.', 'info');
+        return;
+      }
+
+      // Pecah teks menjadi paragraf, lalu bagi setiap 2-3 paragraf menjadi 1 halaman interaktif
+      const paragraphs = rawContent
+        .split(/\n+/)
+        .map(p => p.trim())
+        .filter(Boolean);
+
+      const pages = [];
+      const chunkSize = 2;
+      for (let i = 0; i < paragraphs.length; i += chunkSize) {
+        const chunk = paragraphs.slice(i, i + chunkSize);
+        const pageNum = Math.floor(i / chunkSize) + 1;
+        pages.push({
+          chapterNumber: pageNum,
+          chapterTitle: pageNum === 1 ? firstChapter : `${firstChapter} (Bagian ${pageNum})`,
+          content: chunk
+        });
+      }
+
+      const gradients = [
+        'from-brand-600 via-indigo-700 to-slate-900',
+        'from-emerald-600 via-teal-700 to-slate-900',
+        'from-rose-500 via-pink-700 to-slate-900',
+        'from-amber-500 via-orange-600 to-stone-900'
+      ];
+      const randomGradient = gradients[appState.customBooks.length % gradients.length];
+
+      const newBookId = 'custom-book-' + Date.now();
+      const newBook = {
+        id: newBookId,
+        title,
+        author,
+        category,
+        rating: 5.0,
+        reviewsCount: 1,
+        price: 0,
+        isFree: true,
+        isCustom: true,
+        coverGradient: randomGradient,
+        coverAccent: '#38BDF8',
+        coverIcon: 'fa-feather-pointed',
+        badge: 'E-Book Saya',
+        synopsis: paragraphs[0].slice(0, 140) + (paragraphs[0].length > 140 ? '...' : ''),
+        pages
+      };
+
+      appState.customBooks.unshift(newBook);
+      appState.ownedBookIds.unshift(newBookId);
+      appState.readingProgress[newBookId] = {
+        currentPageIndex: 0,
+        maxPageReached: 0,
+        lastReadAt: Date.now()
+      };
+
+      saveAppState();
+
+      // Reset form & tutup modal
+      document.getElementById('form-upload-ebook').reset();
+      document.getElementById('modal-upload-ebook').classList.add('hidden');
+
+      showToast(`E-Book "${title}" berhasil dibuat & dibuka di Reader!`, 'success');
+      openBookInReader(newBookId, true);
+    }
+
+    // --------------------------------------------------------------------------
+    // 11. EVENT LISTENERS & INITIALIZATION
+    // --------------------------------------------------------------------------
+    function initEventListeners() {
+      // Klik Logo -> Kembali ke Toko / Explore
+      document.getElementById('btn-logo-home').addEventListener('click', () => {
+        switchView('explore');
+      });
+
+      // Tombol Navigasi Utama (Sidebar Desktop & Bottom Bar Mobile)
+      document.querySelectorAll('.nav-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const target = btn.getAttribute('data-nav-target');
+          if (target) switchView(target);
+        });
+      });
+
+      // Tombol Cepat Buka Reader di Header & Sidebar
+      document.getElementById('btn-header-continue-reading').addEventListener('click', () => {
+        switchView('reader');
+      });
+      document.getElementById('btn-sidebar-open-reader').addEventListener('click', () => {
+        switchView('reader');
+      });
+
+      // Pencarian Real-time
+      const searchInput = document.getElementById('global-search-input');
+      const clearSearchBtn = document.getElementById('btn-clear-search');
+
+      searchInput.addEventListener('input', (e) => {
+        appState.searchQuery = e.target.value;
+        clearSearchBtn.classList.toggle('hidden', !appState.searchQuery);
+        if (appState.currentView === 'reader') {
+          switchView('explore');
+        } else if (appState.currentView === 'library') {
+          renderLibraryView();
+        } else {
+          renderExploreView();
+        }
+      });
+
+      clearSearchBtn.addEventListener('click', () => {
+        searchInput.value = '';
+        appState.searchQuery = '';
+        clearSearchBtn.classList.add('hidden');
+        renderExploreView();
+        renderLibraryView();
+      });
+
+      // Filter Kategori di Halaman Toko
+      document.getElementById('category-filter-bar').addEventListener('click', (e) => {
+        const pill = e.target.closest('.cat-pill');
+        if (!pill) return;
+        appState.selectedCategory = pill.getAttribute('data-category') || 'Semua';
+        saveAppState();
+        renderExploreView();
+      });
+
+      // Urutkan Katalog
+      document.getElementById('select-sort-books').addEventListener('change', (e) => {
+        appState.sortBy = e.target.value;
+        renderExploreView();
+      });
+
+      // Reset Filter Pencarian Toko
+      document.getElementById('btn-reset-filter').addEventListener('click', () => {
+        appState.selectedCategory = 'Semua';
+        appState.searchQuery = '';
+        searchInput.value = '';
+        clearSearchBtn.classList.add('hidden');
+        renderExploreView();
+      });
+
+      // Tombol Featured Book Banner
+      document.getElementById('btn-featured-buy').addEventListener('click', () => {
+        if (isBookOwned('book-ai-future')) {
+          openBookInReader('book-ai-future');
+        } else {
+          purchaseOrClaimBook('book-ai-future');
+        }
+      });
+      document.getElementById('btn-featured-preview').addEventListener('click', () => {
+        openBookInReader('book-ai-future');
+      });
+
+      // Delegasi Klik Kartu Buku di Toko (Beli, Baca, Pratinjau)
+      document.getElementById('store-books-grid').addEventListener('click', (e) => {
+        const target = e.target.closest('[data-action]');
+        if (!target) return;
+        const action = target.getAttribute('data-action');
+        const bookId = target.getAttribute('data-book-id');
+        if (!bookId) return;
+
+        if (action === 'buy-book') {
+          purchaseOrClaimBook(bookId);
+        } else if (action === 'read-book' || action === 'preview-book') {
+          openBookInReader(bookId);
+        }
+      });
+
+      // Sub-tab Filter di Halaman Perpustakaan Saya
+      document.getElementById('library-filter-tabs').addEventListener('click', (e) => {
+        const tab = e.target.closest('.lib-tab-btn');
+        if (!tab) return;
+        appState.libraryFilter = tab.getAttribute('data-lib-filter') || 'all';
+        renderLibraryView();
+      });
+
+      // Delegasi Klik Kartu Buku di Perpustakaan Saya
+      document.getElementById('library-books-grid').addEventListener('click', (e) => {
+        const target = e.target.closest('[data-action]');
+        if (!target) return;
+        const action = target.getAttribute('data-action');
+        const bookId = target.getAttribute('data-book-id');
+        if (!bookId) return;
+
+        if (action === 'read-book') {
+          openBookInReader(bookId);
+        } else if (action === 'reset-book-progress') {
+          appState.readingProgress[bookId] = { currentPageIndex: 0, maxPageReached: 0, lastReadAt: Date.now() };
+          saveAppState();
+          renderLibraryView();
+          updateSidebarWidgets();
+          showToast('Progres membaca direset kembali ke Halaman 1.', 'info');
+        } else if (action === 'remove-from-library') {
+          appState.ownedBookIds = appState.ownedBookIds.filter(id => id !== bookId);
+          saveAppState();
+          renderLibraryView();
+          updateSidebarWidgets();
+          showToast('Buku dihapus dari Perpustakaan Saya.', 'info');
+        }
+      });
+
+      // Tombol di Halaman Perpustakaan Kosong
+      document.getElementById('btn-library-explore').addEventListener('click', () => switchView('explore'));
+      document.getElementById('btn-empty-go-store').addEventListener('click', () => switchView('explore'));
+
+      // Kontrol E-Book Reader Toolbar
+      document.getElementById('btn-reader-back').addEventListener('click', () => {
+        switchView('library');
+      });
+
+      document.getElementById('btn-font-decrease').addEventListener('click', () => {
+        appState.readerSettings.fontSize = Math.max(14, appState.readerSettings.fontSize - 2);
+        saveAppState();
+        renderReaderView();
+      });
+
+      document.getElementById('btn-font-increase').addEventListener('click', () => {
+        appState.readerSettings.fontSize = Math.min(28, appState.readerSettings.fontSize + 2);
+        saveAppState();
+        renderReaderView();
+      });
+
+      document.getElementById('btn-font-serif').addEventListener('click', () => {
+        appState.readerSettings.fontFamily = 'serif';
+        saveAppState();
+        renderReaderView();
+      });
+
+      document.getElementById('btn-font-sans').addEventListener('click', () => {
+        appState.readerSettings.fontFamily = 'sans';
+        saveAppState();
+        renderReaderView();
+      });
+
+      document.querySelectorAll('.reader-theme-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const theme = btn.getAttribute('data-reader-theme');
+          if (theme) {
+            appState.readerSettings.theme = theme;
+            saveAppState();
+            renderReaderView();
+          }
+        });
+      });
+
+      document.getElementById('btn-reader-width').addEventListener('click', () => {
+        const order = ['narrow', 'medium', 'wide'];
+        const currentIdx = order.indexOf(appState.readerSettings.widthMode);
+        appState.readerSettings.widthMode = order[(currentIdx + 1) % order.length];
+        saveAppState();
+        renderReaderView();
+      });
+
+      document.getElementById('btn-reader-bookmark').addEventListener('click', () => {
+        toggleCurrentPageBookmark();
+      });
+
+      document.getElementById('btn-reader-claim-book').addEventListener('click', () => {
+        purchaseOrClaimBook(appState.readerSettings.activeBookId);
+      });
+
+      document.getElementById('btn-prev-page').addEventListener('click', () => {
+        changeReaderPage(-1);
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      });
+
+      document.getElementById('btn-next-page').addEventListener('click', () => {
+        changeReaderPage(1);
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      });
+
+      // Navigasi Keyboard Panah Kiri / Kanan saat berada di Reader
+      window.addEventListener('keydown', (e) => {
+        if (appState.currentView !== 'reader') return;
+        const activeTag = document.activeElement ? document.activeElement.tagName : '';
+        if (activeTag === 'INPUT' || activeTag === 'TEXTAREA' || activeTag === 'SELECT') return;
+
+        if (e.key === 'ArrowRight') {
+          changeReaderPage(1);
+        } else if (e.key === 'ArrowLeft') {
+          changeReaderPage(-1);
+        }
+      });
+
+      // Drawer Daftar Isi (Table of Contents)
+      document.getElementById('btn-reader-toc').addEventListener('click', openTocDrawer);
+      document.getElementById('btn-close-toc').addEventListener('click', closeTocDrawer);
+      document.getElementById('btn-close-toc-footer').addEventListener('click', closeTocDrawer);
+      document.getElementById('modal-toc').addEventListener('click', (e) => {
+        if (e.target.id === 'modal-toc') closeTocDrawer();
+        const pageBtn = e.target.closest('[data-toc-page]');
+        if (pageBtn) {
+          const pageIndex = parseInt(pageBtn.getAttribute('data-toc-page'), 10);
+          goToReaderPage(pageIndex);
+          closeTocDrawer();
+        }
+      });
+
+      // Modal Konfirmasi Pembelian Sukses
+      document.getElementById('btn-close-purchase-modal').addEventListener('click', closePurchaseModal);
+      document.getElementById('btn-modal-read-now').addEventListener('click', () => {
+        closePurchaseModal();
+        if (lastPurchasedBookId) openBookInReader(lastPurchasedBookId);
+      });
+      document.getElementById('btn-modal-go-library').addEventListener('click', () => {
+        closePurchaseModal();
+        switchView('library');
+      });
+
+      // Modal Upload E-Book Sendiri
+      const uploadModal = document.getElementById('modal-upload-ebook');
+      const openUploadBtns = [
+        document.getElementById('btn-open-upload-modal'),
+        document.getElementById('btn-library-upload'),
+        document.getElementById('btn-empty-upload')
+      ];
+      openUploadBtns.forEach(btn => {
+        if (btn) btn.addEventListener('click', () => uploadModal.classList.remove('hidden'));
+      });
+
+      document.getElementById('btn-close-upload-modal').addEventListener('click', () => {
+        uploadModal.classList.add('hidden');
+      });
+      document.getElementById('btn-cancel-upload').addEventListener('click', () => {
+        uploadModal.classList.add('hidden');
+      });
+
+      // Tombol Isi Contoh Naskah Otomatis di Form Upload
+      document.getElementById('btn-fill-sample-text').addEventListener('click', () => {
+        document.getElementById('input-ebook-title').value = 'Catatan Senja di Kyoto: Perjalanan Mencari Makna';
+        document.getElementById('input-ebook-author').value = 'Karya Pengguna BookVerse';
+        document.getElementById('input-ebook-category').value = 'Fiksi/Novel';
+        document.getElementById('input-ebook-chapter-title').value = 'Bab 1: Kereta Cepat Menuju Arashiyama';
+        document.getElementById('input-ebook-content').value = [
+          'Pagi itu udara di Stasiun Kyoto terasa sejuk menusuk tulang. Di tangan kananku menggenggam secangkir matcha hangat, sementara di kejauhan deretan pegunungan mulai diselimuti kabut tipis musim gugur yang memerah.',
+          'Aku membuka buku catatan kecilku di dekat jendela gerbong kereta. Setiap perjalanan seorang diri selalu mengajarkan satu hal penting: kita tidak benar-benar pergi untuk melarikan diri, melainkan untuk kembali mengenal suara batin yang sempat tenggelam oleh kesibukan kota.',
+          'Ketika kereta melintasi jembatan sungai Katsura, sinar matahari pagi menembus dedaunan maple. Di hutan bambu Arashiyama nanti, aku tahu bab baru dalam hidupku akan segera dimulai.',
+          'Langkah kakiku menyusuri jalan setapak yang tenang. Suara gesekan batang-batang bambu yang menjulang tinggi terdengar seperti simfoni alam yang menenangkan pikiran. Di sinilah aku menyadari bahwa kebahagiaan sejati sering kali hadir dalam kesederhanaan.'
+        ].join('\n\n');
+      });
+
+      document.getElementById('form-upload-ebook').addEventListener('submit', handleUploadCustomEbook);
+
+      // Tombol Reset Data Default
+      document.getElementById('btn-reset-demo-data').addEventListener('click', () => {
+        try {
+          localStorage.removeItem(STORAGE_KEY);
+        } catch (err) {}
+        appState = JSON.parse(JSON.stringify(defaultState));
+        saveAppState();
+        switchView('explore');
+        showToast('Data aplikasi berhasil direset ke kondisi awal.', 'info');
+      });
+    }
+
+    // Jalankan Aplikasi saat DOM Siap
+    window.addEventListener('DOMContentLoaded', () => {
+      initEventListeners();
+      switchView(appState.currentView || 'explore');
+    });
+  </script>
+</body>
+</html>
