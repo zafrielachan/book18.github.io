@@ -137,24 +137,24 @@
   </style>
 </head>
 
-<body class="min-h-screen flex flex-col selection:bg-brand-500 selection:text-white">
+<body class="min-h-screen flex flex-col overflow-x-hidden selection:bg-brand-500 selection:text-white">
 
   <!-- ==========================================================================
-       TOP HEADER NAVIGATION
+       TOP HEADER NAVIGATION (PRESISI DI MOBILE IPHONE 13, TABLET & DESKTOP)
        ========================================================================== -->
   <header class="sticky top-0 z-30 bg-white/95 backdrop-blur-md border-b border-slate-200/80 transition-all">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-3">
+    <div class="max-w-7xl mx-auto px-3.5 sm:px-6 lg:px-8 py-2.5 md:py-0 md:h-16 flex flex-wrap md:flex-nowrap items-center justify-between gap-y-2.5 gap-x-2 sm:gap-x-4">
       
-      <!-- Logo & Beta Badge -->
-      <div class="flex items-center gap-2.5 shrink-0">
-        <button id="btn-logo-home" type="button" class="flex items-center gap-2.5 text-left group focus:outline-none">
-          <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-brand-500 to-brand-700 flex items-center justify-center text-white shadow-md shadow-brand-500/25 group-hover:scale-105 transition-transform">
-            <i class="fa-solid fa-book-open-reader text-lg"></i>
+      <!-- Baris 1 Kiri: Logo & Beta Badge -->
+      <div class="order-1 flex items-center gap-2 shrink-0 min-w-0">
+        <button id="btn-logo-home" type="button" class="flex items-center gap-2 sm:gap-2.5 text-left group focus:outline-none min-w-0">
+          <div class="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-gradient-to-br from-brand-500 to-brand-700 flex items-center justify-center text-white shadow-md shadow-brand-500/25 group-hover:scale-105 transition-transform shrink-0">
+            <i class="fa-solid fa-book-open-reader text-base sm:text-lg"></i>
           </div>
-          <div>
-            <div class="flex items-center gap-2">
-              <span class="font-extrabold text-xl tracking-tight text-slate-900">Book<span class="text-brand-500">Verse</span></span>
-              <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-brand-50 text-brand-600 border border-brand-200">
+          <div class="min-w-0">
+            <div class="flex items-center gap-1.5 sm:gap-2">
+              <span class="font-extrabold text-lg sm:text-xl tracking-tight text-slate-900">Book<span class="text-brand-500">Verse</span></span>
+              <span class="inline-flex items-center px-1.5 sm:px-2 py-0.5 rounded-full text-[9px] sm:text-[10px] font-bold uppercase tracking-wider bg-brand-50 text-brand-600 border border-brand-200 whitespace-nowrap shrink-0">
                 Beta Prototype
               </span>
             </div>
@@ -163,15 +163,38 @@
         </button>
       </div>
 
-      <!-- Real-Time Interactive Search Bar -->
-      <div class="flex-1 max-w-md mx-1 sm:mx-4">
+      <!-- Baris 1 Kanan (Mobile) / Kanan (Desktop): Right Action Buttons -->
+      <div class="order-2 md:order-3 flex items-center gap-1.5 sm:gap-2 shrink-0 ml-auto md:ml-0">
+        <button
+          id="btn-open-upload-modal"
+          type="button"
+          class="inline-flex items-center justify-center gap-1.5 sm:gap-2 px-3 py-1.5 sm:px-3.5 sm:py-2 rounded-xl text-xs sm:text-sm font-semibold bg-brand-50 hover:bg-brand-100 text-brand-600 border border-brand-200/70 transition-all active:scale-95 whitespace-nowrap"
+        >
+          <i class="fa-solid fa-cloud-arrow-up text-xs sm:text-sm"></i>
+          <span class="hidden md:inline">Tambah E-Book Sendiri</span>
+          <span class="md:hidden">Upload</span>
+        </button>
+
+        <button
+          id="btn-header-continue-reading"
+          type="button"
+          class="hidden sm:inline-flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs sm:text-sm font-semibold bg-slate-900 hover:bg-slate-800 text-white shadow-sm transition-all active:scale-95 whitespace-nowrap"
+          title="Lanjutkan membaca buku terakhir"
+        >
+          <i class="fa-solid fa-glasses text-brand-300"></i>
+          <span>Lanjut Baca</span>
+        </button>
+      </div>
+
+      <!-- Baris 2 Penuh (Mobile) / Tengah (Desktop): Real-Time Interactive Search Bar -->
+      <div class="order-3 md:order-2 w-full md:w-auto md:flex-1 md:max-w-md min-w-0 md:mx-4">
         <div class="relative">
-          <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-sm pointer-events-none"></i>
+          <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-xs sm:text-sm pointer-events-none"></i>
           <input
             id="global-search-input"
             type="text"
             placeholder="Cari judul buku, penulis, atau topik..."
-            class="w-full pl-10 pr-9 py-2 rounded-xl bg-slate-100 hover:bg-slate-200/60 focus:bg-white text-sm text-slate-800 placeholder-slate-400 border border-transparent focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 focus:outline-none transition-all"
+            class="w-full pl-9 sm:pl-10 pr-9 py-2 rounded-xl bg-slate-100 hover:bg-slate-200/60 focus:bg-white text-xs sm:text-sm text-slate-800 placeholder-slate-400 border border-transparent focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 focus:outline-none transition-all"
           />
           <button
             id="btn-clear-search"
@@ -182,29 +205,6 @@
             <i class="fa-solid fa-xmark"></i>
           </button>
         </div>
-      </div>
-
-      <!-- Right Action Buttons -->
-      <div class="flex items-center gap-2 shrink-0">
-        <button
-          id="btn-open-upload-modal"
-          type="button"
-          class="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs sm:text-sm font-semibold bg-brand-50 hover:bg-brand-100 text-brand-600 border border-brand-200/70 transition-all active:scale-95"
-        >
-          <i class="fa-solid fa-cloud-arrow-up"></i>
-          <span class="hidden md:inline">Tambah E-Book Sendiri</span>
-          <span class="md:hidden">Upload</span>
-        </button>
-
-        <button
-          id="btn-header-continue-reading"
-          type="button"
-          class="hidden sm:inline-flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs sm:text-sm font-semibold bg-slate-900 hover:bg-slate-800 text-white shadow-sm transition-all active:scale-95"
-          title="Lanjutkan membaca buku terakhir"
-        >
-          <i class="fa-solid fa-glasses text-brand-300"></i>
-          <span>Lanjut Baca</span>
-        </button>
       </div>
     </div>
   </header>
@@ -581,7 +581,7 @@
         <div id="reader-theme-wrapper" class="reader-theme-light rounded-3xl border border-slate-200/90 overflow-hidden transition-colors duration-300 shadow-lg">
           
           <!-- TOP READER CONTROL TOOLBAR -->
-          <div class="reader-toolbar sticky top-16 z-20 px-4 sm:px-6 py-3 border-b backdrop-blur-md flex flex-wrap items-center justify-between gap-3">
+          <div class="reader-toolbar sticky top-[104px] md:top-16 z-20 px-3.5 sm:px-6 py-2.5 sm:py-3 border-b backdrop-blur-md flex flex-wrap items-center justify-between gap-2.5 sm:gap-3">
             
             <!-- Kiri: Kembali & Info Buku Aktif -->
             <div class="flex items-center gap-3 min-w-0">
